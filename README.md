@@ -11,8 +11,8 @@ Please follow the steps below to setup your environment:
 
 1. Rename the file `example_userdata.json` to `userdata.json`.
 2. Fill out the `userdata.json` with the following information:
-    - `SimBrief_User`: Your SimBrief username.
-    - `AVWX_API_KEY`: Your AVWX API Key.
+    - `simBrief_userName`: Your SimBrief username.
+    - `api_token`: Your AVWX API Key.
 3. Ensure that the `userdata.json` is in the same directory as the executable file.
 
 ## Running the Project
