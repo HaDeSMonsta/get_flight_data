@@ -20,12 +20,34 @@ fn main() {
     let simbrief_json: serde_json::Value = serde_json::from_str(simbrief_data.as_str())
         .expect("Simbrief response should be valid JSON");
 
-    let departure_icao = String::from(&simbrief_json["origin"]["icao_code"].to_string());
-    let arrival_icao = String::from(&simbrief_json["destination"]["icao_code"].to_string());
-
-    write_file(&String::from("response.json"), &simbrief_data);
+    let departure_icao = get_icao_from_json(&simbrief_json, true);
+    let arrival_icao = get_icao_from_json(&simbrief_json, false);
 
     println!("Departure: {}\nArrival: {}", departure_icao, arrival_icao);
+
+    // Get METAR
+    // Format the departure avwx String
+    let avwx_departure_uri = format!("https://avwx.rest/api/metar/{departure_icao}?token={key}");
+    let avwx_arrival_uri = format!("https://avwx.rest/api/metar/{arrival_icao}?token={key}");
+
+    // Request the data via API
+    let departure_metar = send_request(&avwx_departure_uri);
+    let arrival_metar = send_request(&avwx_arrival_uri);
+
+    // Convert to JSON
+    let departure_json: serde_json::Value = serde_json::from_str(departure_metar.as_str())
+        .expect("Departure response should be valid JSON");
+    let arrival_json: serde_json::Value = serde_json::from_str(arrival_metar.as_str())
+        .expect("Arrival response should be valid JSON");
+
+    // Get the raw data and flight rules
+    // Shadow _metar, because we don't need it anymore
+    let departure_metar = get_metar_from_json(&departure_json, true);
+    let departure_fr = get_metar_from_json(&departure_json, false);
+    let arrival_metar = get_metar_from_json(&arrival_json, true);
+    let arrival_fr = get_metar_from_json(&arrival_json, false);
+
+    println!("{departure_metar}\n{departure_fr}\n{arrival_metar}\n{arrival_fr}");
 }
 
 fn send_request(uri: &String) -> String {
@@ -42,13 +64,15 @@ fn send_request(uri: &String) -> String {
     response
 }
 
-fn write_file(name: &String, contend: &String) {
+fn get_icao_from_json(json: &serde_json::Value, departure: bool) -> String {
+    let place = if departure { String::from("origin") }else { String::from("destination") };
+    let s = String::from(&json[place]["icao_code"].to_string()[1..5]);
+    s
+}
 
-    File::create(name).expect("File should be creatable");
-    let file = File::options().append(true).open(name);
-    let mut file = match file {
-        Ok(val) => val,
-        Err(e) => panic!("{e}"),
-    };
-    write!(&mut file, "{}", contend).expect("File should be writable");
+fn get_metar_from_json(json: &serde_json::Value, raw: bool)->String{
+    let key = if raw { String::from("raw") }else { String::from("flight_rules") };
+    let mut s = String::from(&json[key].to_string());
+    s = s[1..s.len()-1].to_string();
+    s
 }
