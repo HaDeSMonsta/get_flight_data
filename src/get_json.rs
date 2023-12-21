@@ -39,7 +39,7 @@ pub enum JsonKey {
 pub fn get_json_data(key: JsonKey) -> String {
     let file = match File::open("userdata.json") {
         Ok(f) => f,
-        Err(e) => panic!("{e}"),
+        Err(_e) => panic!("{_e}"),
     };
 
     let json: serde_json::Value = serde_json::from_reader(file)
