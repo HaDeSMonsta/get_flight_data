@@ -1,6 +1,7 @@
-use reqwest::blocking::Client;
 use std::env;
+
 use chrono::Local;
+use reqwest::blocking::Client;
 
 mod get_json;
 
@@ -38,7 +39,7 @@ fn main() {
     log("Calling avwx API for departure", debug);
     let departure_metar = send_request(&avwx_departure_uri);
     log("Got departure METAR", debug);
-    log("Calling avwx API for arrival",debug);
+    log("Calling avwx API for arrival", debug);
     let arrival_metar = send_request(&avwx_arrival_uri);
     log("Gor arrival METAR", debug);
 
@@ -217,8 +218,23 @@ fn get_atis(response_raw: &String, departure: bool) -> String {
     let mut to_return = response_arr[0]["text_atis"].to_string();
 
     if response_arr[1].to_string() != String::from("null") {
-        if departure {
-            to_return = response_arr[0]["text_atis"].to_string();
+
+        // Get tuples with callsign and ATIS contend
+        let zero_tuple = make_atis_tuple(&response_arr, 0);
+        let one_tuple = make_atis_tuple(&response_arr, 1);
+
+        // Find the correct ATIS fpr the current situation
+        if departure && zero_tuple.0.contains("_D_ATIS") {
+            to_return = zero_tuple.1;
+        } else if departure && one_tuple.0.contains("_D_ATIS") {
+            to_return = one_tuple.1;
+        } else if !departure && zero_tuple.0.contains("_A_ATIS") {
+            to_return = zero_tuple.1;
+        } else if !departure && one_tuple.0.contains("_A_ATIS") {
+            to_return = one_tuple.1;
+        } else {
+            panic!("Neither {}, nor {} contain searched pattern",
+                   zero_tuple.0, one_tuple.0);
         }
     }
 
@@ -232,6 +248,43 @@ fn get_atis(response_raw: &String, departure: bool) -> String {
     }
 
     to_return
+}
+
+/// Extracts the callsign and ATIS information from a JSON array.
+///
+/// # Arguments
+///
+/// * `json_array` - A reference to a `serde_json::Value` representing the JSON array.
+/// * `index` - The index of the element in the JSON array to extract information from.
+///
+/// # Returns
+///
+/// A tuple containing the callsign and ATIS information as strings.
+///
+/// # Example
+///
+/// ```
+/// use serde_json::json;
+///
+/// let json_array = json!([
+///     {
+///         "callsign": "EDDF_D_ATIS",
+///         "text_atis": "Information ALPHA"
+///     },
+///     {
+///         "callsign": "EDDF_A_ATIS",
+///         "text_atis": "Information BRAVO"
+///     }
+/// ]);
+///
+/// let (callsign, atis) = make_atis_tuple(&json_array, 1);
+/// assert_eq!(callsign, "DEF456");
+/// assert_eq!(atis, "Information BRAVO");
+/// ```
+fn make_atis_tuple(json_array: &serde_json::Value, index: u8) -> (String, String) {
+    let callsign = json_array[index as usize]["callsign"].to_string();
+    let atis = json_array[index as usize]["text_atis"].to_string();
+    (callsign, atis)
 }
 
 /// Logs the provided message with the current timestamp if debug mode is enabled.
@@ -255,7 +308,7 @@ fn get_atis(response_raw: &String, departure: bool) -> String {
 /// ```text
 /// [2023-12-21][18:32:46]: This is a debug message
 /// ```
-fn log(message: &str, debug: bool){
+fn log(message: &str, debug: bool) {
     if !debug { return; }
     let now = Local::now().format("[%Y-%m-%d][%H:%M:%S]");
     println!("{now}: {message}")
