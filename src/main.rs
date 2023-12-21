@@ -1,6 +1,3 @@
-use std::fs::File;
-use std::io::Write;
-
 use reqwest::blocking::*;
 
 mod get_json;
@@ -56,10 +53,10 @@ fn send_request(uri: &String) -> String {
         Ok(data) => {
             match data.text() {
                 Ok(val) => val,
-                Err(e) => panic!("{e}"),
+                Err(_e) => panic!("{_e}"),
             }
         }
-        Err(e) => panic!("{e}"),
+        Err(_e) => panic!("{_e}"),
     };
     response
 }
