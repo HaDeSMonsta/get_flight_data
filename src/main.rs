@@ -58,8 +58,6 @@ fn main() {
 
     // Begin Vatsim block
     // Format URIs
-    let departure_icao = String::from("EDDF");
-    let arrival_icao = String::from("EDDF");
     let vatsim_dep_uri = format!("https://api.t538.net/vatsim/atis/{departure_icao}");
     let vatsim_arr_uri = format!("https://api.t538.net/vatsim/atis/{arrival_icao}");
 
