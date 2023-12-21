@@ -7,7 +7,6 @@ mod get_json;
 fn main() {
 
     let args: Vec<String> = env::args().collect();
-    println!("{:?}", args);
     let debug = if args.len() > 1 && args[1] == "-d" { true } else { false };
 
     // Read user values
@@ -251,7 +250,7 @@ fn get_atis(response_raw: &String, departure: bool) -> String {
 ///
 /// Output:
 /// ```text
-/// [2021-01-01][12:34:56:789]: This is a debug message
+/// [2023-12-21][18:32:46]: This is a debug message
 /// ```
 fn log(message: &str, debug: bool){
     if !debug { return; }
