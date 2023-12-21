@@ -5,6 +5,37 @@ pub enum JsonKey {
     Key,
 }
 
+/// Retrieves the value of a JSON key from a file.
+///
+/// # Arguments
+///
+/// * `key` - The JSON key to retrieve the value for.
+///
+/// # Panics
+///
+/// Panics if the file "userdata.json" cannot be opened or if the file
+/// does not contain valid JSON.
+///
+/// # Returns
+///
+/// Returns the value associated with the given key as a String. The value
+/// is obtained by reading the contents of the file "userdata.json" and
+/// extracting the value corresponding to the provided key.
+///
+/// # Examples
+///
+/// ```
+/// use serde_json::Value;
+///
+/// enum JsonKey {
+///     Name,
+///     Key,
+/// }
+///
+/// let json_data = get_json_data(JsonKey::Name);
+///
+/// assert_eq!(json_data, "John Doe");
+/// ```
 pub fn get_json_data(key: JsonKey) -> String {
     let file = match File::open("userdata.json") {
         Ok(f) => f,

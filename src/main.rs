@@ -6,6 +6,7 @@ mod get_json;
 
 fn main() {
 
+    // Get input arguments
     let args: Vec<String> = env::args().collect();
     let debug = if args.len() > 1 && args[1] == "-d" { true } else { false };
 
@@ -56,6 +57,8 @@ fn main() {
 
     // Begin Vatsim block
     // Format URIs
+    let departure_icao = String::from("EDDF");
+    let arrival_icao = String::from("EDDF");
     let vatsim_dep_uri = format!("https://api.t538.net/vatsim/atis/{departure_icao}");
     let vatsim_arr_uri = format!("https://api.t538.net/vatsim/atis/{arrival_icao}");
 
@@ -200,7 +203,7 @@ fn get_metar_from_json(json: &serde_json::Value, raw: bool) -> String {
 /// # Examples
 ///
 /// ```rust,no_run
-/// let uri = String::from("https://vatsim.net/api/atis/EDDF/departure");
+/// let uri = String::from("https://api.t538.net/vatsim/atis/EDDB");
 /// let atis = get_atis(&uri, true);
 /// println!("{}", atis);
 /// ```
