@@ -1,5 +1,6 @@
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::Write;
+use serde_json::{from_reader, Value};
 
 const NAME_FIELD: &str = "simBrief_userName";
 const KEY_FIELD: &str = "api_token";
@@ -42,13 +43,30 @@ pub enum JsonKey {
 /// assert_eq!(json_data, "John Doe");
 /// ```
 pub fn get_json_data(key: JsonKey) -> String {
-    let file = match File::open(&FILE_PATH) {
-        Ok(f) => f,
-        Err(_e) => panic!("{_e}"),
-    };
+    let mut file = OpenOptions::new()
+        .read(true) // Read access
+        .write(true) // Write access
+        .create(true) // Create if it does not exist
+        .open(&FILE_PATH) // And finally open
+        .unwrap_or_else(|e| panic!("Error opening {}\nError: {e}", FILE_PATH));
 
-    let json: serde_json::Value = serde_json::from_reader(file)
-        .expect("File should be proper JSON");
+    let result: Result<Value, _> = from_reader(&file);
+    let json;
+
+    match result {
+        Ok(value) => json = value,
+        Err(_) => {
+            println!("Error reading from file {FILE_PATH}, will create it");
+            let default_json = String::from(format!(
+                "{{\n\
+                \t\"{NAME_FIELD}\": \"\"\n\
+                \t\"{KEY_FIELD}\": \"\"\n\
+                }}"
+            ));
+            write!(file, "{default_json}").expect("Failed writing to file after seeing it's not proper json");
+            return String::new();
+        }
+    }
 
     let val = match key {
         JsonKey::Name => json.get(NAME_FIELD).unwrap().to_string(),
