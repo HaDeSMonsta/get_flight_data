@@ -15,6 +15,10 @@ Please follow the steps below to setup your environment:
     - `api_token`: Your AVWX API Key.
 3. Ensure that the `userdata.json` is in the same directory as the executable file.
 
+**Note:** If the program is run via the command line, the `userdata.json`
+file should be in the same directory from where the command is run,
+not necessarily where the executable file is.
+
 ## Running the Project
 
 With the configuration file ready:
