@@ -38,7 +38,8 @@ pub fn main() {
         loading: Arc::new(AtomicBool::new(false)),
         username: Arc::new(Mutex::new(String::new())),
         api_key: Arc::new(Mutex::new(String::new())),
-        save_credential_time: Instant::now(),
+        save_credential_time: Instant::now() - Duration::from_secs(6), // Subtract 6 seconds
+        // so later check >= 5 is false at the beginning
     };
 
     let options = eframe::NativeOptions {
@@ -126,11 +127,13 @@ impl eframe::App for MyApp {
 
                     ui.heading("Arrival");
                     ui.label(format!("{}", arrival_val));
+
+                    ui.add_space(25.0);
                 }
             }
 
             // Add a way to store credentials
-            egui::CollapsingHeader::new("Change Credentials")
+            egui::CollapsingHeader::new("Set Credentials")
                 .show(ui, |ui| {
                     let mut username = self.username.lock().unwrap();
                     let mut api_key = self.api_key.lock().unwrap();
