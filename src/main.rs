@@ -26,6 +26,10 @@ struct MyApp {
     save_credential_time: Instant,
 }
 
+/// Entry point for the program.
+///
+/// This function initializes the `MyApp` struct, sets up the `options` for the eframe window,
+/// and starts running the application using `eframe::run_native`.
 pub fn main() {
     let contend = MyApp {
         last_update: Instant::now(),
@@ -126,7 +130,7 @@ impl eframe::App for MyApp {
             }
 
             // Add a way to store credentials
-            egui::CollapsingHeader::new("User Settings")
+            egui::CollapsingHeader::new("Change Credentials")
                 .show(ui, |ui| {
                     let mut username = self.username.lock().unwrap();
                     let mut api_key = self.api_key.lock().unwrap();
