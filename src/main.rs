@@ -14,14 +14,16 @@ mod get_json;
 
 struct MyApp {
     last_update: Instant,
-    initial_load: bool,
     // Is this the first time we load
-    data: Arc<Mutex<Option<(String, String)>>>,
+    initial_load: bool,
     // Shared data
+    data: Arc<Mutex<Option<(String, String)>>>,
     loading: Arc<AtomicBool>,
-    // Flag for current loading status
     username: Arc<Mutex<String>>,
+    // Flag for current loading status
     api_key: Arc<Mutex<String>>,
+    // Timer to check if we saved credential in last 5 sec
+    save_credential_time: Instant,
 }
 
 pub fn main() {
@@ -32,6 +34,7 @@ pub fn main() {
         loading: Arc::new(AtomicBool::new(false)),
         username: Arc::new(Mutex::new(String::new())),
         api_key: Arc::new(Mutex::new(String::new())),
+        save_credential_time: Instant::now(),
     };
 
     let options = eframe::NativeOptions {
@@ -142,12 +145,23 @@ impl eframe::App for MyApp {
                         // Set username if not empty
                         if !username.is_empty() {
                             get_json::set_json_data(get_json::JsonKey::Name, username.to_string());
+                            username.clear();
+                            self.save_credential_time = Instant::now();
                         }
 
                         // Set API-key if not empty
                         if !api_key.is_empty() {
                             get_json::set_json_data(get_json::JsonKey::Key, api_key.to_string());
+                            api_key.clear();
+                            self.save_credential_time = Instant::now();
                         }
+                    }
+
+                    // If a credential was saved in the last five seconds
+                    if self.save_credential_time.elapsed() <= Duration::from_secs(5) {
+                        // Display success message
+                        // Note: the program would panic if not successful, so we can assume it worked
+                        ui.colored_label(egui::Color32::GREEN, "Success! Data has been saved.");
                     }
                 });
         });
