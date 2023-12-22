@@ -47,7 +47,13 @@ struct MyApp {
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
+
             let five_mins = Duration::from_secs(5 * 60);
+
+            // Give the user a way to manually reload
+            if ui.button("Reload data").clicked() {
+                self.last_update = Instant::now() - five_mins;
+            }
 
             // Was the last update > 5 mins ago?
             if self.last_update.elapsed() >= five_mins || self.initial_load {
@@ -76,9 +82,14 @@ impl eframe::App for MyApp {
             // Check loading status
             {
                 if self.loading.load(Ordering::Relaxed) {
+
+                    ui.add_space(25f32);
+
                     ui.horizontal(|ui| {
+
                         ui.label("Loading data...");
                         ui.spinner();
+
                     });
                 }
             }
@@ -89,6 +100,8 @@ impl eframe::App for MyApp {
 
                 // If data is available, display it
                 if let Some((departure_val, arrival_val)) = data.as_ref() {
+                    ui.add_space(25f32);
+
                     ui.heading("Departure");
                     ui.label(format!("{}", departure_val));
 
