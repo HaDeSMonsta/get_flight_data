@@ -12,12 +12,25 @@ use eframe::egui;
 mod logic;
 mod get_json;
 
+struct MyApp {
+    last_update: Instant,
+    initial_load: bool,
+    // Is this the first time we load
+    data: Arc<Mutex<Option<(String, String)>>>,
+    // Shared data
+    loading: Arc<AtomicBool>, // Flag for current loading status
+    username: Arc<Mutex<String>>,
+    api_key: Arc<Mutex<String>>,
+}
+
 pub fn main() {
     let contend = MyApp {
         last_update: Instant::now(),
         initial_load: true,
         data: Arc::new(Mutex::new(None)),
         loading: Arc::new(AtomicBool::new(false)),
+        username: Arc::new(Mutex::new(String::new())),
+        api_key: Arc::new(Mutex::new(String::new())),
     };
 
     let options = eframe::NativeOptions {
@@ -34,15 +47,6 @@ pub fn main() {
     ).expect("Run should be running");
 
     println!("Shutting down")
-}
-
-struct MyApp {
-    last_update: Instant,
-    initial_load: bool,
-    // Is this the first time we load
-    data: Arc<Mutex<Option<(String, String)>>>,
-    // Shared data
-    loading: Arc<AtomicBool>, // Flag for current loading status
 }
 
 impl eframe::App for MyApp {
@@ -115,6 +119,27 @@ impl eframe::App for MyApp {
                     ui.label(format!("{}", arrival_val));
                 }
             }
+
+            // Add a way to store credentials
+            egui::CollapsingHeader::new("User Settings")
+                .show(ui, |ui| {
+                    let mut username = self.username.lock().unwrap();
+                    let mut api_key = self.api_key.lock().unwrap();
+
+                    ui.horizontal(|ui| {
+                        ui.label("Username:");
+                        ui.text_edit_singleline(&mut *username);
+                    });
+
+                    ui.horizontal(|ui| {
+                        ui.label("API Key:");
+                        ui.text_edit_singleline(&mut *api_key);
+                    });
+
+                    if ui.button("Save").clicked() {
+                        // here you might want to save these user inputs to the JSON file
+                    }
+                });
         });
     }
 }
