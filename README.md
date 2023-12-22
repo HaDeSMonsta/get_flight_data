@@ -27,7 +27,7 @@ With the configuration file ready:
 - On Linux, open a terminal, navigate to the directory containing the executable file
 and run `./<executable_file_name>`.
 
-Ensure your system meets the essential network requirements for fetching data from SimBrief and AVWX APIs.
+Ensure your system meets the essential network requirements for fetching data from SimBrief, AVWX and Vatsim APIs.
 
 ## Functionality
 
@@ -39,4 +39,4 @@ Once up and running:
 
 Whether you're a pilot looking to simplify your pre-flight process,
 or an aviation enthusiast seeking to automate data retrieval, 
-I hope my project delivers high value. Happy flying!
+I hope my project delivers high value.
