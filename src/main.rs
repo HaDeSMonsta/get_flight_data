@@ -18,7 +18,8 @@ struct MyApp {
     // Is this the first time we load
     data: Arc<Mutex<Option<(String, String)>>>,
     // Shared data
-    loading: Arc<AtomicBool>, // Flag for current loading status
+    loading: Arc<AtomicBool>,
+    // Flag for current loading status
     username: Arc<Mutex<String>>,
     api_key: Arc<Mutex<String>>,
 }
@@ -138,7 +139,15 @@ impl eframe::App for MyApp {
                     });
 
                     if ui.button("Save").clicked() {
-                        // here you might want to save these user inputs to the JSON file
+                        // Set username if not empty
+                        if !username.is_empty() {
+                            get_json::set_json_data(get_json::JsonKey::Name, username.to_string());
+                        }
+
+                        // Set API-key if not empty
+                        if !api_key.is_empty() {
+                            get_json::set_json_data(get_json::JsonKey::Key, api_key.to_string());
+                        }
                     }
                 });
         });
