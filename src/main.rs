@@ -6,6 +6,7 @@ use std::thread;
 use std::time::Duration;
 use std::time::Instant;
 
+use chrono::{Local, Utc};
 use eframe::egui;
 
 mod logic;
@@ -47,7 +48,6 @@ struct MyApp {
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-
             let five_mins = Duration::from_secs(5 * 60);
 
             // Give the user a way to manually reload
@@ -82,14 +82,11 @@ impl eframe::App for MyApp {
             // Check loading status
             {
                 if self.loading.load(Ordering::Relaxed) {
-
                     ui.add_space(25f32);
 
                     ui.horizontal(|ui| {
-
                         ui.label("Loading data...");
                         ui.spinner();
-
                     });
                 }
             }
@@ -100,6 +97,13 @@ impl eframe::App for MyApp {
 
                 // If data is available, display it
                 if let Some((departure_val, arrival_val)) = data.as_ref() {
+                    ui.add_space(25f32);
+
+                    ui.label(format!("Data will be refreshed every five minutes, \
+                    last request time was at: {} lcl ({} z)",
+                                     Local::now().format("%H:%M"),
+                                     Utc::now().format("%H:%M")));
+
                     ui.add_space(25f32);
 
                     ui.heading("Departure");
