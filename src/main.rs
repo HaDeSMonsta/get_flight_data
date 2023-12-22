@@ -1,5 +1,5 @@
-use std::{env, thread};
 use std::process::Command;
+use std::thread;
 use std::time::Duration;
 
 use chrono::Local;
@@ -13,10 +13,6 @@ fn main() {
     loop {
         // Second scope so everything is dropped while we wait for the restart
         {
-            // Get input arguments
-            let args: Vec<String> = env::args().collect();
-            let debug = if args.len() > 1 && args[1] == "-d" { true } else { false };
-
             // Read user values
             let name = get_json::get_json_data(get_json::JsonKey::Name);
             let key = get_json::get_json_data(get_json::JsonKey::Key);
@@ -25,9 +21,9 @@ fn main() {
             let simbrief_uri = format!("https://www.simbrief.com/api/xml.fetcher.php?username={name}&json=1");
 
             // Get Simbrief data via API
-            log("Calling Simbrief API", debug);
+            log("Calling Simbrief API");
             let simbrief_data = send_request(&simbrief_uri);
-            log("Got response from Simbrief", debug);
+            log("Got response from Simbrief");
 
             // Convert response to JSON datatype
             let simbrief_json: serde_json::Value = serde_json::from_str(simbrief_data.as_str())
@@ -42,12 +38,12 @@ fn main() {
             let avwx_arrival_uri = format!("https://avwx.rest/api/metar/{arrival_icao}?token={key}");
 
             // Request the data via API
-            log("Calling avwx API for departure", debug);
+            log("Calling avwx API for departure");
             let departure_metar = send_request(&avwx_departure_uri);
-            log("Got departure METAR", debug);
-            log("Calling avwx API for arrival", debug);
+            log("Got departure METAR");
+            log("Calling avwx API for arrival");
             let arrival_metar = send_request(&avwx_arrival_uri);
-            log("Gor arrival METAR", debug);
+            log("Got arrival METAR");
 
             // Convert to JSON
             let departure_json: serde_json::Value = serde_json::from_str(departure_metar.as_str())
@@ -68,12 +64,12 @@ fn main() {
             let vatsim_arr_uri = format!("https://api.t538.net/vatsim/atis/{arrival_icao}");
 
             // Call the Vatsim API
-            log("Calling Vatsim API for departure", debug);
+            log("Calling Vatsim API for departure");
             let dep_atis_response = send_request(&vatsim_dep_uri);
-            log("Got departure ATIS", debug);
-            log("Calling Vatsim API for arrival ATIS", debug);
+            log("Got departure ATIS");
+            log("Calling Vatsim API for arrival ATIS");
             let arr_atis_response = send_request(&vatsim_arr_uri);
-            log("Got arrival ATIS", debug);
+            log("Got arrival ATIS");
 
             // Get the formatted ATIS
             let dep_atis = get_atis(&dep_atis_response, true);
@@ -299,29 +295,18 @@ fn make_atis_tuple(json_array: &serde_json::Value, index: u8) -> (String, String
     (callsign, atis)
 }
 
-/// Logs the provided message with the current timestamp if debug mode is enabled.
+/// Logs a message with timestamp in the format '[YYYY-MM-DD][HH:MM:SS]: {message}'
 ///
 /// # Arguments
 ///
-/// * `message` - A string slice containing the message to be logged.
-/// * `debug` - A boolean indicating whether debug mode is enabled.
+/// * `message` - The message to be logged
 ///
 /// # Example
 ///
-/// ```rust
-/// use chrono::Local;
-///
-/// fn main() {
-///     log("This is a debug message", true);
-/// }
 /// ```
-///
-/// Output:
-/// ```text
-/// [2023-12-21][18:32:46]: This is a debug message
+/// log("This is a log message");
 /// ```
-fn log(message: &str, debug: bool) {
-    if !debug { return; }
+fn log(message: &str) {
     let now = Local::now().format("[%Y-%m-%d][%H:%M:%S]");
     println!("{now}: {message}")
 }
