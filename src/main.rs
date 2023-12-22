@@ -94,6 +94,10 @@ fn main() {
 
             let line_separator = String::from("-".repeat(100));
 
+            // Add delay because Rust is faster than the terminal
+            // Without the delay the terminal would clear the next print
+            thread::sleep(Duration::from_millis(10));
+
             println!("\n{current_time}\n\n{print_dep}\n\n{line_separator}\n\n{print_arr}");
         }
         thread::sleep(Duration::from_secs(5 * 60));
@@ -333,6 +337,6 @@ fn clear_term() {
             .spawn()
             .expect("Command should be executable");
     } else if cfg!(unix) {
-        //Command::new("clear").spawn().expect("Command should be executable");
+        Command::new("clear").spawn().expect("Command should be executable");
     } else { panic!("Couldn't detect OS") }
 }
