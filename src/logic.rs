@@ -7,6 +7,22 @@ use reqwest::blocking::Client;
 
 use crate::get_json;
 
+/// Updates data by calling various APIs and printing the results.
+///
+/// # Returns
+///
+/// A tuple containing two strings. The first string represents the information for the departure airport,
+/// and the second string represents the information for the arrival airport.
+///
+/// # Examples
+///
+/// ```
+/// let (print_dep, print_arr) = update_data();
+///
+/// // Print the departure and arrival information
+/// println!("{}", print_dep);
+/// println!("{}", print_arr);
+/// ```
 pub fn update_data() -> (String, String) {
 
     // Read user values
