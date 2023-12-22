@@ -34,7 +34,8 @@ pub fn main() {
     };
 
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default(),//.with_inner_size([320.0, 240.0]),
+        viewport: egui::ViewportBuilder::default().with_inner_size(
+            [750.0, 700.0]), // [x, y]
         ..Default::default()
     };
 
@@ -86,7 +87,7 @@ impl eframe::App for MyApp {
             // Check loading status
             {
                 if self.loading.load(Ordering::Relaxed) {
-                    ui.add_space(25f32);
+                    ui.add_space(25.0);
 
                     ui.horizontal(|ui| {
                         ui.label("Loading data...");
@@ -101,7 +102,7 @@ impl eframe::App for MyApp {
 
                 // If data is available, display it
                 if let Some((departure_val, arrival_val)) = data.as_ref() {
-                    ui.add_space(25f32);
+                    ui.add_space(25.0);
 
                     ui.label(format!("Data will be refreshed every five minutes, \
                     last request time was at: {} lcl ({} z)",
@@ -113,7 +114,7 @@ impl eframe::App for MyApp {
                     ui.heading("Departure");
                     ui.label(format!("{}", departure_val));
 
-                    ui.add_space(25f32);
+                    ui.add_space(25.0);
 
                     ui.heading("Arrival");
                     ui.label(format!("{}", arrival_val));
@@ -132,7 +133,7 @@ impl eframe::App for MyApp {
                     });
 
                     ui.horizontal(|ui| {
-                        ui.label("API Key:");
+                        ui.label("API Key:     ");
                         ui.text_edit_singleline(&mut *api_key);
                     });
 
