@@ -7,7 +7,7 @@ use reqwest::blocking::Client;
 
 use crate::get_json;
 
-fn update_data() -> (String, String) {
+pub fn update_data() -> (String, String) {
 
     // Read user values
     let name = get_json::get_json_data(get_json::JsonKey::Name);
