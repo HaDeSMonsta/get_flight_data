@@ -71,6 +71,9 @@ fn main() {
             let arr_atis_response = send_request(&vatsim_arr_uri);
             log("Got arrival ATIS");
 
+            // After getting all the information, clear the terminal
+            clear_term();
+
             // Get the formatted ATIS
             let dep_atis = get_atis(&dep_atis_response, true);
             let arr_atis = get_atis(&arr_atis_response, false);
