@@ -1,4 +1,6 @@
-use std::env;
+use std::{env, thread};
+use std::process::Command;
+use std::time::Duration;
 
 use chrono::Local;
 use reqwest::blocking::Client;
@@ -7,85 +9,97 @@ mod get_json;
 
 fn main() {
 
-    // Get input arguments
-    let args: Vec<String> = env::args().collect();
-    let debug = if args.len() > 1 && args[1] == "-d" { true } else { false };
+    // Loop until interrupted
+    loop {
+        // Second scope so everything is dropped while we wait for the restart
+        {
+            // Get input arguments
+            let args: Vec<String> = env::args().collect();
+            let debug = if args.len() > 1 && args[1] == "-d" { true } else { false };
 
-    // Read user values
-    let name = get_json::get_json_data(get_json::JsonKey::Name);
-    let key = get_json::get_json_data(get_json::JsonKey::Key);
+            // Read user values
+            let name = get_json::get_json_data(get_json::JsonKey::Name);
+            let key = get_json::get_json_data(get_json::JsonKey::Key);
 
-    // Format the Simbrief request String
-    let simbrief_uri = format!("https://www.simbrief.com/api/xml.fetcher.php?username={name}&json=1");
+            // Format the Simbrief request String
+            let simbrief_uri = format!("https://www.simbrief.com/api/xml.fetcher.php?username={name}&json=1");
 
-    // Get Simbrief data via API
-    log("Calling Simbrief API", debug);
-    let simbrief_data = send_request(&simbrief_uri);
-    log("Got response from Simbrief", debug);
+            // Get Simbrief data via API
+            log("Calling Simbrief API", debug);
+            let simbrief_data = send_request(&simbrief_uri);
+            log("Got response from Simbrief", debug);
 
-    // Convert response to JSON datatype
-    let simbrief_json: serde_json::Value = serde_json::from_str(simbrief_data.as_str())
-        .expect("Simbrief response should be valid JSON");
+            // Convert response to JSON datatype
+            let simbrief_json: serde_json::Value = serde_json::from_str(simbrief_data.as_str())
+                .expect("Simbrief response should be valid JSON");
 
-    let departure_icao = get_icao_from_json(&simbrief_json, true);
-    let arrival_icao = get_icao_from_json(&simbrief_json, false);
+            let departure_icao = get_icao_from_json(&simbrief_json, true);
+            let arrival_icao = get_icao_from_json(&simbrief_json, false);
 
-    // Get METAR
-    // Format the departure avwx String
-    let avwx_departure_uri = format!("https://avwx.rest/api/metar/{departure_icao}?token={key}");
-    let avwx_arrival_uri = format!("https://avwx.rest/api/metar/{arrival_icao}?token={key}");
+            // Get METAR
+            // Format the departure avwx String
+            let avwx_departure_uri = format!("https://avwx.rest/api/metar/{departure_icao}?token={key}");
+            let avwx_arrival_uri = format!("https://avwx.rest/api/metar/{arrival_icao}?token={key}");
 
-    // Request the data via API
-    log("Calling avwx API for departure", debug);
-    let departure_metar = send_request(&avwx_departure_uri);
-    log("Got departure METAR", debug);
-    log("Calling avwx API for arrival", debug);
-    let arrival_metar = send_request(&avwx_arrival_uri);
-    log("Gor arrival METAR", debug);
+            // Request the data via API
+            log("Calling avwx API for departure", debug);
+            let departure_metar = send_request(&avwx_departure_uri);
+            log("Got departure METAR", debug);
+            log("Calling avwx API for arrival", debug);
+            let arrival_metar = send_request(&avwx_arrival_uri);
+            log("Gor arrival METAR", debug);
 
-    // Convert to JSON
-    let departure_json: serde_json::Value = serde_json::from_str(departure_metar.as_str())
-        .expect("Departure response should be valid JSON");
-    let arrival_json: serde_json::Value = serde_json::from_str(arrival_metar.as_str())
-        .expect("Arrival response should be valid JSON");
+            // Convert to JSON
+            let departure_json: serde_json::Value = serde_json::from_str(departure_metar.as_str())
+                .expect("Departure response should be valid JSON");
+            let arrival_json: serde_json::Value = serde_json::from_str(arrival_metar.as_str())
+                .expect("Arrival response should be valid JSON");
 
-    // Get the raw data and flight rules
-    // Shadow _metar, because we don't need it anymore
-    let departure_metar = get_metar_from_json(&departure_json, true);
-    let departure_fr = get_metar_from_json(&departure_json, false);
-    let arrival_metar = get_metar_from_json(&arrival_json, true);
-    let arrival_fr = get_metar_from_json(&arrival_json, false);
+            // Get the raw data and flight rules
+            // Shadow _metar, because we don't need it anymore
+            let departure_metar = get_metar_from_json(&departure_json, true);
+            let departure_fr = get_metar_from_json(&departure_json, false);
+            let arrival_metar = get_metar_from_json(&arrival_json, true);
+            let arrival_fr = get_metar_from_json(&arrival_json, false);
 
-    // Begin Vatsim block
-    // Format URIs
-    let vatsim_dep_uri = format!("https://api.t538.net/vatsim/atis/{departure_icao}");
-    let vatsim_arr_uri = format!("https://api.t538.net/vatsim/atis/{arrival_icao}");
+            // Begin Vatsim block
+            // Format URIs
+            let vatsim_dep_uri = format!("https://api.t538.net/vatsim/atis/{departure_icao}");
+            let vatsim_arr_uri = format!("https://api.t538.net/vatsim/atis/{arrival_icao}");
 
-    // Call the Vatsim API
-    log("Calling Vatsim API for departure", debug);
-    let dep_atis_response = send_request(&vatsim_dep_uri);
-    log("Got departure ATIS", debug);
-    log("Calling Vatsim API for arrival ATIS", debug);
-    let arr_atis_response = send_request(&vatsim_arr_uri);
-    log("Got arrival ATIS", debug);
+            // Call the Vatsim API
+            log("Calling Vatsim API for departure", debug);
+            let dep_atis_response = send_request(&vatsim_dep_uri);
+            log("Got departure ATIS", debug);
+            log("Calling Vatsim API for arrival ATIS", debug);
+            let arr_atis_response = send_request(&vatsim_arr_uri);
+            log("Got arrival ATIS", debug);
 
-    // Get the formatted ATIS
-    let dep_atis = get_atis(&dep_atis_response, true);
-    let arr_atis = get_atis(&arr_atis_response, false);
+            // Get the formatted ATIS
+            let dep_atis = get_atis(&dep_atis_response, true);
+            let arr_atis = get_atis(&arr_atis_response, false);
 
-    let print_dep = format!("Departure ICAO: {departure_icao}\n\n\
-    Vatsim ATIS: {dep_atis}\n\
-    METAR: {departure_metar}\n\
-    Flight rules: {departure_fr}");
+            // Get the current time so user knows how old information is
+            let current_time = Local::now().format("%H:%M");
+            let current_time = String::from(format!("Request time: {current_time}"));
 
-    let print_arr = format!("Arrival ICAO: {arrival_icao}\n\n\
-    Vatsim ATIS: {arr_atis}\n\
-    METAR: {arrival_metar}\n\
-    Flight rules: {arrival_fr}");
+            let print_dep = format!("Departure ICAO: {departure_icao}\n\n\
+            Vatsim ATIS: {dep_atis}\n\
+            METAR: {departure_metar}\n\
+            Flight rules: {departure_fr}");
 
-    let line_separator = String::from("-".repeat(100));
+            let print_arr = format!("Arrival ICAO: {arrival_icao}\n\n\
+            Vatsim ATIS: {arr_atis}\n\
+            METAR: {arrival_metar}\n\
+            Flight rules: {arrival_fr}");
 
-    println!("\n{print_dep}\n\n{line_separator}\n\n{print_arr}")
+            let line_separator = String::from("-".repeat(100));
+
+            println!("\n{current_time}\n\n{print_dep}\n\n{line_separator}\n\n{print_arr}");
+        }
+        thread::sleep(Duration::from_secs(5 * 60));
+        clear_term()
+    }
 }
 
 /// Sends an HTTP GET request to the specified URI and returns the response as a string.
@@ -310,4 +324,27 @@ fn log(message: &str, debug: bool) {
     if !debug { return; }
     let now = Local::now().format("[%Y-%m-%d][%H:%M:%S]");
     println!("{now}: {message}")
+}
+
+/// Clears the terminal screen.
+///
+/// This function clears the terminal screen based on the current operating system.
+/// If the operating system is Windows, it uses the "cls" command to clear the screen.
+/// If the operating system is Unix, it uses the "clear" command to clear the screen.
+/// If the operating system cannot be detected, it panics with an error message.
+///
+/// # Example
+///
+/// ```rust
+/// clear_term();
+/// ```
+fn clear_term() {
+    if cfg!(windows) {
+        Command::new("cmd")
+            .args(&mut ["/C", "cls"])
+            .spawn()
+            .expect("Command should be executable");
+    } else if cfg!(unix) {
+        //Command::new("clear").spawn().expect("Command should be executable");
+    } else { panic!("Couldn't detect OS") }
 }
