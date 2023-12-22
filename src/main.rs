@@ -127,10 +127,10 @@ impl eframe::App for MyApp {
 
                     ui.heading("Arrival");
                     ui.label(format!("{}", arrival_val));
-
-                    ui.add_space(25.0);
                 }
             }
+
+            ui.add_space(25.0);
 
             // Add a way to store credentials
             egui::CollapsingHeader::new("Set Credentials")
