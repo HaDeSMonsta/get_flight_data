@@ -50,7 +50,7 @@ pub fn main() {
 
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default().with_inner_size(
-            [750.0, 700.0]), // [x, y]
+            [750.0, 725.0]), // [x, y]
         ..Default::default()
     };
 
@@ -122,7 +122,7 @@ impl eframe::App for MyApp {
                     ui.add_space(25.0);
 
                     ui.label(format!("Data will be refreshed every five minutes, \
-                    last request time was at: {} lcl ({} z)",
+                    last request time was at: {}lcl ({}z)",
                                      self.local_time.format("%H:%M"),
                                      self.utc_time.format("%H:%M")));
 
