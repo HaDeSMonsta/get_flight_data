@@ -149,18 +149,23 @@ impl eframe::App for MyApp {
                     });
 
                     if ui.button("Save").clicked() {
-                        // Set username if not empty
-                        if !username.is_empty() {
-                            get_json::set_json_data(get_json::JsonKey::Name, username.to_string());
+                        // Set data if not empty
+                        if !username.is_empty() || !api_key.is_empty() {
+                            // Set username if not empty
+                            if !username.is_empty() {
+                                get_json::set_json_data(get_json::JsonKey::Name, username.to_string());
+                            }
+                            // Set API-Key if not empty
+                            if !api_key.is_empty() {
+                                get_json::set_json_data(get_json::JsonKey::Key, api_key.to_string())
+                            }
+                            // Clear both fields
                             username.clear();
-                            self.save_credential_time = Instant::now();
-                        }
-
-                        // Set API-key if not empty
-                        if !api_key.is_empty() {
-                            get_json::set_json_data(get_json::JsonKey::Key, api_key.to_string());
                             api_key.clear();
+                            // Display changed data message
                             self.save_credential_time = Instant::now();
+                            // Reload on change of data
+                            self.last_update = Instant::now() - five_mins;
                         }
                     }
 

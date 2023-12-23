@@ -59,7 +59,7 @@ pub fn get_json_data(key: JsonKey) -> String {
             println!("Error reading from file {FILE_PATH}, will create it");
             let default_json = String::from(format!(
                 "{{\n\
-                \t\"{NAME_FIELD}\": \"\"\n\
+                \t\"{NAME_FIELD}\": \"\",\n\
                 \t\"{KEY_FIELD}\": \"\"\n\
                 }}"
             ));
