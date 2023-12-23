@@ -43,7 +43,7 @@ pub enum JsonKey {
 /// assert_eq!(json_data, "John Doe");
 /// ```
 pub fn get_json_data(key: JsonKey) -> String {
-    let mut file = OpenOptions::new()
+    let file = OpenOptions::new()
         .read(true) // Read access
         .write(true) // Write access
         .create(true) // Create if it does not exist
@@ -57,6 +57,12 @@ pub fn get_json_data(key: JsonKey) -> String {
         Ok(value) => json = value,
         Err(_) => {
             println!("Error reading from file {FILE_PATH}, will create it");
+            drop(file);
+            let mut file = OpenOptions::new()
+                .write(true)
+                .truncate(true)
+                .open(&FILE_PATH)
+                .expect("Unable to open invalid file again");
             let default_json = String::from(format!(
                 "{{\n\
                 \t\"{NAME_FIELD}\": \"\",\n\
