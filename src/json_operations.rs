@@ -28,7 +28,6 @@ pub enum JsonKey {
 /// # Examples
 ///
 /// ```rust
-///
 /// let json_data = get_json_data(JsonKey::Name);
 /// assert_eq!(json_data, "value");
 /// ```
