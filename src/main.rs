@@ -9,6 +9,7 @@ use std::time::Instant;
 use chrono::{DateTime, Local, Utc};
 use eframe::egui;
 use json_operations::JsonKey;
+use logic::log;
 
 mod logic;
 mod json_operations;
@@ -157,23 +158,25 @@ impl eframe::App for MyApp {
 
                     if ui.button("Save").clicked() {
                         // Set data if not empty
-                        if !username.is_empty() || !api_key.is_empty() {
+                        if !username.trim().is_empty() || !api_key.trim().is_empty() {
                             // Set username if not empty
-                            if !username.is_empty() {
-                                json_operations::set_json_data(JsonKey::Name, username.to_string());
+                            if !username.trim().is_empty() {
+                                json_operations::set_json_data(JsonKey::Name, username.trim().to_string());
+                                log("Replacing username")
                             }
                             // Set API-Key if not empty
-                            if !api_key.is_empty() {
-                                json_operations::set_json_data(JsonKey::Key, api_key.to_string())
+                            if !api_key.trim().is_empty() {
+                                json_operations::set_json_data(JsonKey::Key, api_key.trim().to_string());
+                                log("Replacing API-Key")
                             }
-                            // Clear both fields
-                            username.clear();
-                            api_key.clear();
                             // Display changed data message
                             self.save_credential_time = Instant::now();
                             // Reload on change of data
                             self.last_update = Instant::now() - five_mins;
                         }
+                        // Clear both fields, even if no contend
+                        username.clear();
+                        api_key.clear();
                     }
 
                     // If a credential was saved in the last five seconds

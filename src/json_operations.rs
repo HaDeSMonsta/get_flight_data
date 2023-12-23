@@ -28,7 +28,6 @@ pub enum JsonKey {
 /// # Examples
 ///
 /// ```rust
-/// use std::path::Path;
 ///
 /// let json_data = get_json_data(JsonKey::Name);
 /// assert_eq!(json_data, "value");

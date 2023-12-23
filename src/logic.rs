@@ -322,7 +322,7 @@ fn make_atis_tuple(json_array: &serde_json::Value, index: u8) -> (String, String
 /// ```
 /// log("This is a log message");
 /// ```
-fn log(message: &str) {
+pub fn log(message: &str) {
     let now = Local::now().format("[%Y-%m-%d][%H:%M:%S]");
     println!("{now}: {message}")
 }
