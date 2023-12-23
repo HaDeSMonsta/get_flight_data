@@ -6,8 +6,9 @@ use std::thread;
 use std::time::Duration;
 use std::time::Instant;
 
-use chrono::{Local, Utc};
+use chrono::{DateTime, Local, Utc};
 use eframe::egui;
+use get_json::JsonKey;
 
 mod logic;
 mod get_json;
@@ -24,6 +25,8 @@ struct MyApp {
     api_key: Arc<Mutex<String>>,
     // Timer to check if we saved credential in last 5 sec
     save_credential_time: Instant,
+    local_time: DateTime<Local>,
+    utc_time: DateTime<Utc>,
 }
 
 /// Entry point for the program.
@@ -40,6 +43,8 @@ pub fn main() {
         api_key: Arc::new(Mutex::new(String::new())),
         save_credential_time: Instant::now() - Duration::from_secs(6), // Subtract 6 seconds
         // so later check >= 5 is false at the beginning
+        local_time: Local::now(),
+        utc_time: Utc::now(),
     };
 
     let options = eframe::NativeOptions {
@@ -73,8 +78,10 @@ impl eframe::App for MyApp {
             if self.last_update.elapsed() >= five_mins || self.initial_load {
                 self.last_update = Instant::now();
                 self.initial_load = false;
+                self.local_time = Local::now();
+                self.utc_time = Utc::now();
 
-                // Clone for ue in new Thread
+                // Clone for use in new Thread
                 let data_to_update = self.data.clone();
                 let loading_status = self.loading.clone();
 
@@ -115,8 +122,8 @@ impl eframe::App for MyApp {
 
                     ui.label(format!("Data will be refreshed every five minutes, \
                     last request time was at: {} lcl ({} z)",
-                                     Local::now().format("%H:%M"),
-                                     Utc::now().format("%H:%M")));
+                                     self.local_time.format("%H:%M"),
+                                     self.utc_time.format("%H:%M")));
 
                     ui.add_space(25f32);
 
@@ -153,11 +160,11 @@ impl eframe::App for MyApp {
                         if !username.is_empty() || !api_key.is_empty() {
                             // Set username if not empty
                             if !username.is_empty() {
-                                get_json::set_json_data(get_json::JsonKey::Name, username.to_string());
+                                get_json::set_json_data(JsonKey::Name, username.to_string());
                             }
                             // Set API-Key if not empty
                             if !api_key.is_empty() {
-                                get_json::set_json_data(get_json::JsonKey::Key, api_key.to_string())
+                                get_json::set_json_data(JsonKey::Key, api_key.to_string())
                             }
                             // Clear both fields
                             username.clear();
