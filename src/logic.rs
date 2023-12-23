@@ -5,7 +5,7 @@ use std::time::Duration;
 use chrono::Local;
 use reqwest::blocking::Client;
 
-use crate::get_json;
+use crate::json_operations;
 
 /// Updates data by calling various APIs and printing the results.
 ///
@@ -26,8 +26,8 @@ use crate::get_json;
 pub fn update_data() -> (String, String) {
 
     // Read user values
-    let name = get_json::get_json_data(get_json::JsonKey::Name);
-    let key = get_json::get_json_data(get_json::JsonKey::Key);
+    let name = json_operations::get_json_data(json_operations::JsonKey::Name);
+    let key = json_operations::get_json_data(json_operations::JsonKey::Key);
 
     // Format the Simbrief request String
     let simbrief_uri = format!("https://www.simbrief.com/api/xml.fetcher.php?username={name}&json=1");

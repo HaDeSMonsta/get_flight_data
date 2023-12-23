@@ -8,10 +8,10 @@ use std::time::Instant;
 
 use chrono::{DateTime, Local, Utc};
 use eframe::egui;
-use get_json::JsonKey;
+use json_operations::JsonKey;
 
 mod logic;
-mod get_json;
+mod json_operations;
 
 struct MyApp {
     last_update: Instant,
@@ -160,11 +160,11 @@ impl eframe::App for MyApp {
                         if !username.is_empty() || !api_key.is_empty() {
                             // Set username if not empty
                             if !username.is_empty() {
-                                get_json::set_json_data(JsonKey::Name, username.to_string());
+                                json_operations::set_json_data(JsonKey::Name, username.to_string());
                             }
                             // Set API-Key if not empty
                             if !api_key.is_empty() {
-                                get_json::set_json_data(JsonKey::Key, api_key.to_string())
+                                json_operations::set_json_data(JsonKey::Key, api_key.to_string())
                             }
                             // Clear both fields
                             username.clear();

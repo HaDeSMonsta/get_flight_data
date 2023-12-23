@@ -11,36 +11,27 @@ pub enum JsonKey {
     Key,
 }
 
-/// Retrieves the value of a JSON key from a file.
+/// Retrieves JSON data from a given key in a file. If the file does not exist or is not a valid JSON format,
+/// it creates a new JSON file with empty values but valid keys.
 ///
 /// # Arguments
 ///
-/// * `key` - The JSON key to retrieve the value for.
+/// * `key` - An enum value representing the key to retrieve from the JSON data.
 ///
-/// # Panics
+/// # Errors
 ///
-/// Panics if the file "userdata.json" cannot be opened or if the file
-/// does not contain valid JSON.
-///
-/// # Returns
-///
-/// Returns the value associated with the given key as a String. The value
-/// is obtained by reading the contents of the file "userdata.json" and
-/// extracting the value corresponding to the provided key.
+/// This function returns an empty string under the following conditions:
+/// * If the file does not exist, it is created anew with empty values but valid keys.
+/// * If the file exists but cannot be read or written.
+/// * If the file is not a valid JSON file, it is overwritten with a valid JSON structure containing empty values.
 ///
 /// # Examples
 ///
-/// ```
-/// use serde_json::Value;
-///
-/// enum JsonKey {
-///     Name,
-///     Key,
-/// }
+/// ```rust
+/// use std::path::Path;
 ///
 /// let json_data = get_json_data(JsonKey::Name);
-///
-/// assert_eq!(json_data, "John Doe");
+/// assert_eq!(json_data, "value");
 /// ```
 pub fn get_json_data(key: JsonKey) -> String {
     let file = OpenOptions::new()
