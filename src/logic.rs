@@ -23,7 +23,7 @@ use crate::json_operations;
 /// assert!(print_dep.contains("Departure ICAO: EDDB"));
 /// assert!(print_arr.contains("Arrival ICAO: EHAM"));
 /// ```
-pub fn update_data(departure_icao: &String, arrival_icao: &String) -> (String, String) {
+pub fn update_data(departure_icao: &str, arrival_icao: &str) -> (String, String) {
 
     // Removed redundant SimBrief call
     // Read user key
@@ -150,7 +150,7 @@ pub fn update_fp() -> (String, String) {
 /// let response = send_request(&uri);
 /// println!("Response: {}", response);
 /// ```
-fn send_request(uri: &String) -> String {
+fn send_request(uri: &str) -> String {
     // TODO implement error handling
     let http_client = Client::new();
     let response = match http_client.get(uri).send() {
@@ -252,11 +252,11 @@ fn get_metar_from_json(json: &serde_json::Value, raw: bool) -> String {
 /// let atis = get_atis(&uri, true);
 /// println!("{}", atis);
 /// ```
-fn get_atis(response_raw: &String, departure: bool) -> String {
+fn get_atis(response_raw: &str, departure: bool) -> String {
     if response_raw == "[]" { return "No vatsim ATIS available".to_string(); }
 
     let dep_or_arr = if departure { String::from("departure") } else { String::from("arrival") };
-    let response_arr: serde_json::Value = serde_json::from_str(&response_raw.as_str())
+    let response_arr: serde_json::Value = serde_json::from_str(&response_raw)
         .expect(format!("Response for {dep_or_arr} should be valid JSON Array").as_str());
 
     let mut to_return = response_arr[0]["text_atis"].to_string();

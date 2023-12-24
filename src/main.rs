@@ -4,8 +4,7 @@
 use std::{process, thread};
 use std::sync::{Arc, mpsc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::time::Duration;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use chrono::{DateTime, Local, Utc};
 use eframe::egui;
@@ -16,7 +15,7 @@ use logic::log;
 mod logic;
 mod json_operations;
 
-struct MyApp {
+struct DataCarrier {
     // Time since last request
     last_update: Instant,
     // Shared data
@@ -43,7 +42,7 @@ pub fn main() {
     // Initially call Simbrief to get the flight plan
     let (departure, arrival) = logic::update_fp();
 
-    let contend = MyApp {
+    let contend = DataCarrier {
         last_update: Instant::now() - Duration::from_secs((5 * 60) + 1), // Initially load the data
         data: Arc::new(Mutex::new(None)),
         loading: Arc::new(AtomicBool::new(false)),
@@ -69,7 +68,7 @@ pub fn main() {
         "Get Flight Data",
         options,
         Box::new(|_| {
-            Box::<MyApp>::new(contend)
+            Box::<DataCarrier>::new(contend)
         }),
     ).unwrap_or_else(|err| {
         let msg = format!("Failed to run Egui frame: {err}");
@@ -81,7 +80,7 @@ pub fn main() {
     println!("Shutting down")
 }
 
-impl eframe::App for MyApp {
+impl eframe::App for DataCarrier {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             let five_mins = Duration::from_secs(5 * 60);
@@ -258,12 +257,12 @@ impl eframe::App for MyApp {
                         if !username.trim().is_empty() || !api_key.trim().is_empty() {
                             // Set username if not empty
                             if !username.trim().is_empty() {
-                                json_operations::set_json_data(JsonKey::Name, username.trim().to_string());
+                                json_operations::set_json_data(JsonKey::Name, username.trim());
                                 log("Replacing username")
                             }
                             // Set API-Key if not empty
                             if !api_key.trim().is_empty() {
-                                json_operations::set_json_data(JsonKey::Key, api_key.trim().to_string());
+                                json_operations::set_json_data(JsonKey::Key, api_key.trim());
                                 log("Replacing API-Key")
                             }
                             // Display changed data message

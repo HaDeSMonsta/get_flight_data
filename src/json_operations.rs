@@ -92,7 +92,7 @@ pub fn get_json_data(key: JsonKey) -> String {
 ///
 /// my_module::set_json_data(key, val);
 /// ```
-pub fn set_json_data(key: JsonKey, val: String) {
+pub fn set_json_data(key: JsonKey, val: &str) {
     let other_val = match key {
         JsonKey::Name => get_json_data(JsonKey::Key),
         JsonKey::Key => get_json_data(JsonKey::Name),
