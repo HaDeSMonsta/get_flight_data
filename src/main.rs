@@ -19,8 +19,6 @@ mod json_operations;
 struct MyApp {
     // Time since last request
     last_update: Instant,
-    // Is this the first time we load
-    initial_load: bool,
     // Shared data
     data: Arc<Mutex<Option<(String, String)>>>,
     // Flag for current loading status
@@ -41,17 +39,12 @@ struct MyApp {
     flight_plan_update: Option<mpsc::Receiver<(String, String)>>,
 }
 
-/// Entry point for the program.
-///
-/// This function initializes the `MyApp` struct, sets up the `options` for the eframe window,
-/// and starts running the application using `eframe::run_native`.
 pub fn main() {
     // Initially call Simbrief to get the flight plan
     let (departure, arrival) = logic::update_fp();
 
     let contend = MyApp {
-        last_update: Instant::now(),
-        initial_load: true,
+        last_update: Instant::now() - Duration::from_secs((5 * 60) + 1), // Initially load the data
         data: Arc::new(Mutex::new(None)),
         loading: Arc::new(AtomicBool::new(false)),
         username: Arc::new(Mutex::new(String::new())),
@@ -105,7 +98,6 @@ impl eframe::App for MyApp {
                     ui.spinner();
 
                     if let Some(ref flight_plan_update) = self.flight_plan_update {
-                        // Try to receive the update without blocking
                         match flight_plan_update.try_recv() {
                             Ok((departure, arrival)) => {
                                 // Update received, apply it
@@ -142,9 +134,8 @@ impl eframe::App for MyApp {
             });
 
             // Was the last update > 5 mins ago?
-            if self.last_update.elapsed() >= five_mins || self.initial_load {
+            if self.last_update.elapsed() >= five_mins {
                 self.last_update = Instant::now();
-                self.initial_load = false;
                 self.local_time = Local::now();
                 self.utc_time = Utc::now();
 
