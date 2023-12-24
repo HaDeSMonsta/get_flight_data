@@ -83,9 +83,6 @@ pub fn update_data() -> (String, String) {
     let arr_atis_response = send_request(&vatsim_arr_uri);
     log("Got arrival ATIS");
 
-    // After getting all the information, clear the terminal
-    clear_term();
-
     // Get the formatted ATIS
     let dep_atis = get_atis(&dep_atis_response, true);
     let arr_atis = get_atis(&arr_atis_response, false);
@@ -105,10 +102,6 @@ pub fn update_data() -> (String, String) {
             Flight rules: {arrival_fr}");
 
     let line_separator = String::from("-".repeat(100));
-
-    // Add delay because Rust is faster than the terminal
-    // Without the delay the terminal would clear the next print
-    thread::sleep(Duration::from_millis(10));
 
     println!("\n{current_time}\n\n{print_dep}\n\n{line_separator}\n\n{print_arr}");
     (print_dep, print_arr)
