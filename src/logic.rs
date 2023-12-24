@@ -1,5 +1,3 @@
-use std::process::Command;
-
 use chrono::Local;
 use reqwest::blocking::Client;
 
@@ -347,27 +345,4 @@ fn make_atis_tuple(json_array: &serde_json::Value, index: u8) -> (String, String
 pub fn log(message: &str) {
     let now = Local::now().format("[%Y-%m-%d][%H:%M:%S]");
     println!("{now}: {message}")
-}
-
-/// Clears the terminal screen.
-///
-/// This function clears the terminal screen based on the current operating system.
-/// If the operating system is Windows, it uses the "cls" command to clear the screen.
-/// If the operating system is Unix, it uses the "clear" command to clear the screen.
-/// If the operating system cannot be detected, it panics with an error message.
-///
-/// # Example
-///
-/// ```rust
-/// clear_term();
-/// ```
-fn clear_term() {
-    if cfg!(windows) {
-        Command::new("cmd")
-            .args(&mut ["/C", "cls"])
-            .spawn()
-            .expect("Command should be executable");
-    } else if cfg!(unix) {
-        Command::new("clear").spawn().expect("Command should be executable");
-    } else { panic!("Couldn't detect OS") }
 }
