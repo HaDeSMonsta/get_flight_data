@@ -2,7 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 use std::{process, thread};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, mpsc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 use std::time::Instant;
@@ -36,6 +36,9 @@ struct MyApp {
     // Departure and arrival
     departure: String,
     arrival: String,
+    // Flag if we are loading a flight plan through button click
+    loading_flight_plan: bool,
+    flight_plan_update: Option<mpsc::Receiver<(String, String)>>,
 }
 
 /// Entry point for the program.
@@ -59,6 +62,8 @@ pub fn main() {
         utc_time: Utc::now(),
         departure,
         arrival,
+        loading_flight_plan: false,
+        flight_plan_update: None,
     };
 
     let options = eframe::NativeOptions {
@@ -94,12 +99,45 @@ impl eframe::App for MyApp {
                     self.last_update = Instant::now() - five_mins;
                 }
 
-                if ui.button("Reload Flight Plan").clicked() {
-                    // Update flight plan, then update metar and atis
-                    let (departure, arrival) = logic::update_fp();
-                    self.departure = departure;
-                    self.arrival = arrival;
-                    self.last_update = Instant::now() - five_mins;
+                if self.loading_flight_plan {
+                    // Only show while updating
+                    ui.label("Loading Flight Plan...");
+                    ui.spinner();
+
+                    if let Some(ref flight_plan_update) = self.flight_plan_update {
+                        // Try to receive the update without blocking
+                        match flight_plan_update.try_recv() {
+                            Ok((departure, arrival)) => {
+                                // Update received, apply it
+                                self.departure = departure;
+                                self.arrival = arrival;
+                                self.last_update = Instant::now() - five_mins;
+
+                                // Stop loading and clear the Receiver
+                                self.loading_flight_plan = false;
+                                self.flight_plan_update = None;
+                            }
+                            // If no update received yet, nothing to do
+                            Err(_) => (),
+                        }
+                    }
+                } else {
+                    if ui.button("Reload Flight Plan").clicked() {
+                        // Begin loading
+                        self.loading_flight_plan = true;
+
+                        // Reset the Receiver
+                        let (tx, rx) = mpsc::channel();
+                        self.flight_plan_update = Some(rx);
+
+                        // Spawn a new thread to perform the update
+                        thread::spawn(move || {
+                            let (departure, arrival) = logic::update_fp();
+
+                            // Send the update back to the main thread
+                            tx.send((departure, arrival)).unwrap();
+                        });
+                    }
                 }
             });
 
