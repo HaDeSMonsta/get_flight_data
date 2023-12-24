@@ -36,6 +36,8 @@ struct DataCarrier {
     // Flag if we are loading a flight plan through button click
     loading_flight_plan: bool,
     flight_plan_update: Option<mpsc::Receiver<(String, String)>>,
+    // Flag if user changed SimBrief username
+    username_changed: bool,
 }
 
 pub fn main() {
@@ -56,6 +58,7 @@ pub fn main() {
         arrival,
         loading_flight_plan: false,
         flight_plan_update: None,
+        username_changed: false
     };
 
     let options = eframe::NativeOptions {
@@ -113,9 +116,11 @@ impl eframe::App for DataCarrier {
                         }
                     }
                 } else {
-                    if ui.button("Reload Flight Plan").clicked() {
+                    // Reload flight plan if button clicked or SimBrief username is changed
+                    if ui.button("Reload Flight Plan").clicked() || self.username_changed {
                         // Begin loading
                         self.loading_flight_plan = true;
+                        self.username_changed = false;
 
                         // Reset the Receiver
                         let (tx, rx) = mpsc::channel();
@@ -255,16 +260,20 @@ impl eframe::App for DataCarrier {
                     if ui.button("Save").clicked() {
                         // Set data if not empty
                         if !username.trim().is_empty() || !api_key.trim().is_empty() {
-                            // Set username if not empty
-                            if !username.trim().is_empty() {
+                            // Set username if not empty and different
+                            if !username.trim().is_empty() &&
+                                username.trim() != json_operations::get_json_data(JsonKey::Name) {
                                 json_operations::set_json_data(JsonKey::Name, username.trim());
-                                log("Replacing username")
+                                log("Replacing username");
+                                self.username_changed = true;
                             }
-                            // Set API-Key if not empty
-                            if !api_key.trim().is_empty() {
+                            // Set API-Key if not empty but different
+                            if !api_key.trim().is_empty() &&
+                                api_key.trim() != json_operations::get_json_data(JsonKey::Key) {
                                 json_operations::set_json_data(JsonKey::Key, api_key.trim());
-                                log("Replacing API-Key")
+                                log("Replacing API-Key");
                             }
+
                             // Display changed data message
                             self.save_credential_time = Instant::now();
                             // Reload on change of data

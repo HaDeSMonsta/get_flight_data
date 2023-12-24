@@ -201,8 +201,8 @@ fn send_request(uri: &str) -> String {
 /// ```
 fn get_icao_from_json(json: &serde_json::Value, departure: bool) -> String {
     let place = if departure { String::from("origin") } else { String::from("destination") };
-    let s = String::from(&json[place]["icao_code"].to_string()[1..5]);
-    s
+    let s = String::from(&json[place]["icao_code"].to_string());
+    if s.len() > 5 { s[1..5].to_string() } else { String::new() }
 }
 
 /// Extracts the METAR value from the given JSON object.
