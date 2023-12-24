@@ -1,48 +1,35 @@
 use std::process::Command;
-use std::thread;
-use std::time::Duration;
 
 use chrono::Local;
 use reqwest::blocking::Client;
 
 use crate::json_operations;
 
-/// Updates data by calling various APIs and printing the results.
+/// Updates and retrieves data regarding departure and arrival airports.
+///
+/// # Arguments
+///
+/// * `departure_icao` - The ICAO code of the departure airport.
+/// * `arrival_icao` - The ICAO code of the arrival airport.
 ///
 /// # Returns
 ///
-/// A tuple containing two strings. The first string represents the information for the departure airport,
-/// and the second string represents the information for the arrival airport.
+/// A tuple containing the formatted data as strings for the departure and arrival airports.
 ///
 /// # Examples
 ///
+/// ```rust
+/// let departure_icao = String::from("EDDB");
+/// let arrival_icao = String::from("EHAM");
+/// let (print_dep, print_arr) = update_data(&departure_icao, &arrival_icao);
+/// assert!(print_dep.contains("Departure ICAO: EDDB"));
+/// assert!(print_arr.contains("Arrival ICAO: EHAM"));
 /// ```
-/// let (print_dep, print_arr) = update_data();
-///
-/// // Print the departure and arrival information
-/// println!("{}", print_dep);
-/// println!("{}", print_arr);
-/// ```
-pub fn update_data() -> (String, String) {
+pub fn update_data(departure_icao: &String, arrival_icao: &String) -> (String, String) {
 
-    // Read user values
-    let name = json_operations::get_json_data(json_operations::JsonKey::Name);
+    // Removed redundant SimBrief call
+    // Read user key
     let key = json_operations::get_json_data(json_operations::JsonKey::Key);
-
-    // Format the Simbrief request String
-    let simbrief_uri = format!("https://www.simbrief.com/api/xml.fetcher.php?username={name}&json=1");
-
-    // Get Simbrief data via API
-    log("Calling Simbrief API");
-    let simbrief_data = send_request(&simbrief_uri);
-    log("Got response from Simbrief");
-
-    // Convert response to JSON datatype
-    let simbrief_json: serde_json::Value = serde_json::from_str(simbrief_data.as_str())
-        .expect("Simbrief response should be valid JSON");
-
-    let departure_icao = get_icao_from_json(&simbrief_json, true);
-    let arrival_icao = get_icao_from_json(&simbrief_json, false);
 
     // Get METAR
     // Format the departure avwx String
@@ -105,6 +92,47 @@ pub fn update_data() -> (String, String) {
 
     println!("\n{current_time}\n\n{print_dep}\n\n{line_separator}\n\n{print_arr}");
     (print_dep, print_arr)
+}
+
+/// Updates flight plan data from SimBrief API.
+/// Retrieves SimBrief username, formats the API request URL,
+/// calls the API, converts the response to JSON, and extracts
+/// departure and arrival ICAO codes from the JSON response.
+///
+/// # Returns
+///
+/// A tuple containing the departure and arrival ICAO codes.
+///
+/// # Examples
+///
+/// ```
+/// fn main() {
+///     let (departure_icao, arrival_icao) = update_fp();
+///     println!("Departure ICAO: {}", departure_icao);
+///     println!("Arrival ICAO: {}", arrival_icao);
+/// }
+/// ```
+pub fn update_fp() -> (String, String) {
+
+    // Get SimBrief username
+    let name = json_operations::get_json_data(json_operations::JsonKey::Name);
+
+    // Format the Simbrief request String
+    let simbrief_uri = format!("https://www.simbrief.com/api/xml.fetcher.php?username={name}&json=1");
+
+    // Get Simbrief data via API
+    log("Calling Simbrief API");
+    let simbrief_data = send_request(&simbrief_uri);
+    log("Got response from Simbrief");
+
+    // Convert response to JSON datatype
+    let simbrief_json: serde_json::Value = serde_json::from_str(simbrief_data.as_str())
+        .expect("Simbrief response should be valid JSON");
+
+    let departure_icao = get_icao_from_json(&simbrief_json, true);
+    let arrival_icao = get_icao_from_json(&simbrief_json, false);
+
+    (departure_icao, arrival_icao)
 }
 
 /// Sends an HTTP GET request to the specified URI and returns the response as a string.

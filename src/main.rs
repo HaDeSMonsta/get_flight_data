@@ -17,19 +17,25 @@ mod logic;
 mod json_operations;
 
 struct MyApp {
+    // Time since last request
     last_update: Instant,
     // Is this the first time we load
     initial_load: bool,
     // Shared data
     data: Arc<Mutex<Option<(String, String)>>>,
-    loading: Arc<AtomicBool>,
-    username: Arc<Mutex<String>>,
     // Flag for current loading status
+    loading: Arc<AtomicBool>,
+    // Credentials to store on button press
+    username: Arc<Mutex<String>>,
     api_key: Arc<Mutex<String>>,
     // Timer to check if we saved credential in last 5 sec
     save_credential_time: Instant,
+    // The time of last request
     local_time: DateTime<Local>,
     utc_time: DateTime<Utc>,
+    // Departure and arrival
+    departure: String,
+    arrival: String,
 }
 
 /// Entry point for the program.
@@ -37,6 +43,9 @@ struct MyApp {
 /// This function initializes the `MyApp` struct, sets up the `options` for the eframe window,
 /// and starts running the application using `eframe::run_native`.
 pub fn main() {
+    // Initially call Simbrief to get the flight plan
+    let (departure, arrival) = logic::update_fp();
+
     let contend = MyApp {
         last_update: Instant::now(),
         initial_load: true,
@@ -48,6 +57,8 @@ pub fn main() {
         // so later check >= 5 is false at the beginning
         local_time: Local::now(),
         utc_time: Utc::now(),
+        departure,
+        arrival,
     };
 
     let options = eframe::NativeOptions {
@@ -77,10 +88,20 @@ impl eframe::App for MyApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             let five_mins = Duration::from_secs(5 * 60);
 
-            // Give the user a way to manually reload
-            if ui.button("Reload data").clicked() {
-                self.last_update = Instant::now() - five_mins;
-            }
+            ui.horizontal(|ui| {
+                // Give the user a way to manually reload
+                if ui.button("Reload data").clicked() {
+                    self.last_update = Instant::now() - five_mins;
+                }
+
+                if ui.button("Reload Flight Plan").clicked() {
+                    // Update flight plan, then update metar and atis
+                    let (departure, arrival) = logic::update_fp();
+                    self.departure = departure;
+                    self.arrival = arrival;
+                    self.last_update = Instant::now() - five_mins;
+                }
+            });
 
             // Was the last update > 5 mins ago?
             if self.last_update.elapsed() >= five_mins || self.initial_load {
@@ -95,8 +116,12 @@ impl eframe::App for MyApp {
 
                 loading_status.store(true, Ordering::Relaxed); // Set loading status
 
+                // Clone the fields to use in new thread
+                let departure = self.departure.clone();
+                let arrival = self.arrival.clone();
+
                 thread::spawn(move || {
-                    let new_data = logic::update_data();
+                    let new_data = logic::update_data(&departure, &arrival);
 
                     // Update shared data
                     match data_to_update.lock() {
@@ -178,7 +203,7 @@ impl eframe::App for MyApp {
                             process::exit(1);
                         }
                     };
-                    let mut api_key = match self.api_key.lock(){
+                    let mut api_key = match self.api_key.lock() {
                         Ok(key) => key,
                         Err(err) => {
                             let msg = format!("Mutex was poisoned. \
