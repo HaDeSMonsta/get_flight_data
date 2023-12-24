@@ -132,6 +132,7 @@ pub fn update_data() -> (String, String) {
 /// println!("Response: {}", response);
 /// ```
 fn send_request(uri: &String) -> String {
+    // TODO implement error handling
     let http_client = Client::new();
     let response = match http_client.get(uri).send() {
         Ok(data) => {
@@ -233,7 +234,7 @@ fn get_metar_from_json(json: &serde_json::Value, raw: bool) -> String {
 /// println!("{}", atis);
 /// ```
 fn get_atis(response_raw: &String, departure: bool) -> String {
-    if response_raw == "[]" { return String::from("No vatsim ATIS available"); }
+    if response_raw == "[]" { return "No vatsim ATIS available".to_string(); }
 
     let dep_or_arr = if departure { String::from("departure") } else { String::from("arrival") };
     let response_arr: serde_json::Value = serde_json::from_str(&response_raw.as_str())

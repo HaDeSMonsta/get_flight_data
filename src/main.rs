@@ -1,13 +1,14 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+use std::{process, thread};
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::thread;
 use std::time::Duration;
 use std::time::Instant;
 
 use chrono::{DateTime, Local, Utc};
 use eframe::egui;
+
 use json_operations::JsonKey;
 use logic::log;
 
@@ -60,7 +61,12 @@ pub fn main() {
         Box::new(|_| {
             Box::<MyApp>::new(contend)
         }),
-    ).expect("Run should be running");
+    ).unwrap_or_else(|err| {
+        let msg = format!("Failed to run Egui frame: {err}");
+        let msg = msg.as_str();
+        log(msg);
+        process::exit(1);
+    });
 
     println!("Shutting down")
 }
@@ -92,9 +98,18 @@ impl eframe::App for MyApp {
                     let new_data = logic::update_data();
 
                     // Update shared data
-                    let mut data = data_to_update.lock().unwrap();
-                    *data = Some(new_data);
-                    drop(data); //Explicitly drop lock
+                    match data_to_update.lock() {
+                        Ok(mut data) => {
+                            *data = Some(new_data);
+                        }
+                        Err(err) => {
+                            let msg = format!("Mutex was poisoned. \
+                            Failed to fetch data from the `data` Mutex guard: {err}");
+                            let msg = msg.as_str();
+                            log(msg);
+                            process::exit(1);
+                        }
+                    }
 
                     // Now, when loading is done, set flag to false
                     loading_status.store(false, Ordering::Relaxed);
@@ -115,26 +130,35 @@ impl eframe::App for MyApp {
 
             // Access shared data
             {
-                let data = self.data.lock().unwrap();
+                match self.data.lock() {
+                    Ok(data) => {
+                        // If data is available, display it
+                        if let Some((departure_val, arrival_val)) = data.as_ref() {
+                            ui.add_space(25.0);
 
-                // If data is available, display it
-                if let Some((departure_val, arrival_val)) = data.as_ref() {
-                    ui.add_space(25.0);
-
-                    ui.label(format!("Data will be refreshed every five minutes, \
+                            ui.label(format!("Data will be refreshed every five minutes, \
                     last request time was at: {}lcl ({}z)",
-                                     self.local_time.format("%H:%M"),
-                                     self.utc_time.format("%H:%M")));
+                                             self.local_time.format("%H:%M"),
+                                             self.utc_time.format("%H:%M")));
 
-                    ui.add_space(25f32);
+                            ui.add_space(25f32);
 
-                    ui.heading("Departure");
-                    ui.label(format!("{}", departure_val));
+                            ui.heading("Departure");
+                            ui.label(format!("{}", departure_val));
 
-                    ui.add_space(25.0);
+                            ui.add_space(25.0);
 
-                    ui.heading("Arrival");
-                    ui.label(format!("{}", arrival_val));
+                            ui.heading("Arrival");
+                            ui.label(format!("{}", arrival_val));
+                        }
+                    }
+                    Err(err) => {
+                        let msg = format!("Mutex was poisoned. \
+                            Failed to fetch data from the `data` Mutex guard: {err}");
+                        let msg = msg.as_str();
+                        log(msg);
+                        process::exit(1);
+                    }
                 }
             }
 
@@ -143,8 +167,26 @@ impl eframe::App for MyApp {
             // Add a way to store credentials
             egui::CollapsingHeader::new("Set Credentials")
                 .show(ui, |ui| {
-                    let mut username = self.username.lock().unwrap();
-                    let mut api_key = self.api_key.lock().unwrap();
+                    let mut username = match self.username.lock() {
+                        Ok(name) => name,
+                        Err(err) => {
+                            let msg = format!("Mutex was poisoned. \
+                            Failed to fetch data from the `data` Mutex guard: {err}");
+                            let msg = msg.as_str();
+                            log(msg);
+                            process::exit(1);
+                        }
+                    };
+                    let mut api_key = match self.api_key.lock(){
+                        Ok(key) => key,
+                        Err(err) => {
+                            let msg = format!("Mutex was poisoned. \
+                            Failed to fetch data from the `data` Mutex guard: {err}");
+                            let msg = msg.as_str();
+                            log(msg);
+                            process::exit(1);
+                        }
+                    };
 
                     ui.horizontal(|ui| {
                         ui.label("Username:");
