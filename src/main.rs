@@ -42,10 +42,9 @@ struct DataCarrier {
 
 pub fn main() {
     // Initially call Simbrief to get the flight plan
-    let (departure, arrival) = logic::update_fp();
 
     let contend = DataCarrier {
-        last_update: Instant::now() - Duration::from_secs((5 * 60) + 1), // Initially load the data
+        last_update: Instant::now(), // Initially data will be loaded because we simulate click of reload fp button
         data: Arc::new(Mutex::new(None)),
         loading: Arc::new(AtomicBool::new(false)),
         username: Arc::new(Mutex::new(String::new())),
@@ -54,11 +53,11 @@ pub fn main() {
         // so later check >= 5 is false at the beginning
         local_time: Local::now(),
         utc_time: Utc::now(),
-        departure,
-        arrival,
+        departure: String::new(),
+        arrival: String::new(),
         loading_flight_plan: false,
         flight_plan_update: None,
-        username_changed: false
+        username_changed: true,
     };
 
     let options = eframe::NativeOptions {
