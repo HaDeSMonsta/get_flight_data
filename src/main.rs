@@ -265,6 +265,7 @@ impl eframe::App for DataCarrier {
                                 username.trim() != json_operations::get_json_data(JsonKey::Name) {
                                 json_operations::set_json_data(JsonKey::Name, username.trim());
                                 log("Replacing username");
+                                // Reload Flight Plan from SimBrief with new username
                                 self.username_changed = true;
                             }
                             // Set API-Key if not empty but different

@@ -202,6 +202,7 @@ fn send_request(uri: &str) -> String {
 fn get_icao_from_json(json: &serde_json::Value, departure: bool) -> String {
     let place = if departure { String::from("origin") } else { String::from("destination") };
     let s = String::from(&json[place]["icao_code"].to_string());
+    // No longer crash when invalid SimBrief username
     if s.len() > 5 { s[1..5].to_string() } else { String::new() }
 }
 
