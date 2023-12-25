@@ -194,8 +194,8 @@ fn get_icao_from_json(json: &serde_json::Value) -> (String, String) {
     let mut departure = String::from(&json["origin"]["icao_code"].to_string());
     let mut arrival = String::from(&json["destination"]["icao_code"].to_string());
 
-    departure = trim_icao_str(departure);
-    arrival = trim_icao_str(arrival);
+    departure = trim_icao_str(&departure);
+    arrival = trim_icao_str(&arrival);
 
     (departure, arrival)
 }
@@ -213,7 +213,7 @@ fn get_icao_from_json(json: &serde_json::Value) -> (String, String) {
 /// # Returns
 ///
 /// The trimmed string.
-fn trim_icao_str(s: String) -> String {
+fn trim_icao_str(s: &String) -> String {
     if s.len() > 5 {
         s[1..s.len() - 1].to_string()
     } else {
