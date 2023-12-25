@@ -50,10 +50,8 @@ pub fn update_data(departure_icao: &str, arrival_icao: &str) -> (String, String)
 
     // Get the raw data and flight rules
     // Shadow _metar, because we don't need it anymore
-    let departure_metar = get_metar_from_json(&departure_json, true);
-    let departure_fr = get_metar_from_json(&departure_json, false);
-    let arrival_metar = get_metar_from_json(&arrival_json, true);
-    let arrival_fr = get_metar_from_json(&arrival_json, false);
+    let (departure_metar, departure_fr) = get_metar_from_json(&departure_json);
+    let (arrival_metar, arrival_fr) = get_metar_from_json(&arrival_json);
 
     // Begin Vatsim block
     // Format URIs
@@ -224,11 +222,13 @@ fn get_icao_from_json(json: &serde_json::Value, departure: bool) -> String {
 /// let result = get_metar_from_json(&json, false);
 /// assert_eq!(result, "IFR");
 /// ```
-fn get_metar_from_json(json: &serde_json::Value, raw: bool) -> String {
-    let key = if raw { String::from("raw") } else { String::from("flight_rules") };
-    let mut s = json[key].to_string();
-    s = s[1..s.len() - 1].to_string();
-    s
+fn get_metar_from_json(json: &serde_json::Value) -> (String, String) {
+    let mut raw = json["raw"].to_string();
+    let mut fr = json["flight_rules"].to_string();
+
+    raw = raw[1..raw.len() - 1].to_string();
+    fr = fr[1..fr.len() - 1].to_string();
+    (raw, fr)
 }
 
 /// Get the ATIS (Automatic Terminal Information Service) for a specified airport.
