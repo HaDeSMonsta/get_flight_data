@@ -38,6 +38,10 @@ struct DataCarrier {
     flight_plan_update: Option<mpsc::Receiver<(String, String)>>,
     // Flag if user changed SimBrief username
     username_changed: bool,
+    // Flag to check if user wants to pause calls
+    stop_updating: bool,
+    // Flag if the user is manually updating and thus overriding the checkbox for exactly one time
+    manual_update: bool,
 }
 
 pub fn main() {
@@ -58,6 +62,8 @@ pub fn main() {
         loading_flight_plan: false,
         flight_plan_update: None,
         username_changed: true,
+        stop_updating: false,
+        manual_update: false,
     };
 
     let options = eframe::NativeOptions {
@@ -91,6 +97,7 @@ impl eframe::App for DataCarrier {
                 // Give the user a way to manually reload
                 if ui.button("Reload data").clicked() {
                     self.last_update = Instant::now() - five_mins;
+                    self.manual_update = true;
                 }
 
                 if self.loading_flight_plan {
@@ -104,7 +111,9 @@ impl eframe::App for DataCarrier {
                                 // Update received, apply it
                                 self.departure = departure;
                                 self.arrival = arrival;
+                                // Force an update, regardless if paused
                                 self.last_update = Instant::now() - five_mins;
+                                self.manual_update = true;
 
                                 // Stop loading and clear the Receiver
                                 self.loading_flight_plan = false;
@@ -134,13 +143,21 @@ impl eframe::App for DataCarrier {
                         });
                     }
                 }
+
+                // Checkbox for users to stop automatic updates
+                // In cruise you usually don't need those constant calls
+                let text = "Suppress automatic updates";
+                ui.checkbox(&mut self.stop_updating, text);
             });
 
             // Was the last update > 5 mins ago?
-            if self.last_update.elapsed() >= five_mins {
-                self.last_update = Instant::now();
+            if (!self.stop_updating || self.manual_update) && self.last_update.elapsed() >= five_mins {
+                // Set times
                 self.local_time = Local::now();
                 self.utc_time = Utc::now();
+                // Reset activation conditions
+                self.last_update = Instant::now();
+                self.manual_update = false;
 
                 // Clone for use in new Thread
                 let data_to_update = self.data.clone();
@@ -192,13 +209,13 @@ impl eframe::App for DataCarrier {
                     Ok(data) => {
                         // If data is available, display it
                         if let Some((departure_val, arrival_val)) = data.as_ref() {
-                            if !self.loading.load(Ordering::Relaxed){
+                            if !self.loading.load(Ordering::Relaxed) {
                                 ui.add_space(25.0);
 
                                 ui.label(format!("Data will be refreshed every five minutes, \
                                         last request time was at: {}lcl ({}z)",
-                                        self.local_time.format("%H:%M"),
-                                        self.utc_time.format("%H:%M")));
+                                                 self.local_time.format("%H:%M"),
+                                                 self.utc_time.format("%H:%M")));
                             }
                             ui.add_space(25.0);
 
