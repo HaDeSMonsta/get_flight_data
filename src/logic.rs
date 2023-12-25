@@ -204,23 +204,32 @@ fn get_icao_from_json(json: &serde_json::Value, departure: bool) -> String {
     if s.len() > 5 { s[1..5].to_string() } else { String::new() }
 }
 
-/// Extracts the METAR value from the given JSON object.
+/// Extracts the METAR (Meteorological Aerodrome Report) raw and flight rules from a JSON object.
 ///
 /// # Arguments
 ///
-/// * `json` - A reference to a `serde_json::Value` containing the JSON object.
-/// * `raw` - A boolean value indicating whether the METAR value should be returned in raw format.
+/// * `json` - A reference to a serde_json::Value representing the JSON object.
 ///
 /// # Returns
 ///
-/// A `String` containing the extracted METAR value.
+/// A tuple containing the METAR raw and flight rules as strings.
 ///
-/// # Example
+/// # Examples
 ///
-/// ```rust
-/// let json = json!({"flight_rules": "IFR", "raw": "METAR data"});
-/// let result = get_metar_from_json(&json, false);
-/// assert_eq!(result, "IFR");
+/// ```
+/// #[macro_use] extern crate serde_json;
+///
+/// use serde_json::Value;
+///
+/// let json = json!({
+///     "raw": "EDDB 251820Z AUTO 24010KT 9999 VCSH SCT027 BKN039 OVC045 FEW///TCU 09/06 Q1005 NOSIG",
+///     "flight_rules": "VFR"
+/// });
+///
+/// let (raw, fr) = get_metar_from_json(&json);
+///
+/// assert_eq!(raw, "EDDB 251820Z AUTO 24010KT 9999 VCSH SCT027 BKN039 OVC045 FEW///TCU 09/06 Q1005 NOSIG");
+/// assert_eq!(fr, "VFR");
 /// ```
 fn get_metar_from_json(json: &serde_json::Value) -> (String, String) {
     let mut raw = json["raw"].to_string();
