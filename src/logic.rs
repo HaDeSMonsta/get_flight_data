@@ -125,8 +125,7 @@ pub fn update_fp() -> (String, String) {
     let simbrief_json: serde_json::Value = serde_json::from_str(simbrief_data.as_str())
         .expect("Simbrief response should be valid JSON");
 
-    let departure_icao = get_icao_from_json(&simbrief_json, true);
-    let arrival_icao = get_icao_from_json(&simbrief_json, false);
+    let (departure_icao, arrival_icao) = get_icao_from_json(&simbrief_json);
 
     (departure_icao, arrival_icao)
 }
@@ -163,45 +162,63 @@ fn send_request(uri: &str) -> String {
     response
 }
 
-/// Extracts the International Civil Aviation Organization (ICAO) code from a JSON object.
-///
-/// This function takes a JSON object (`json`) and a boolean value (`departure`) as arguments.
-/// If `departure` is true, it extracts the ICAO code from the "origin" field of the JSON object.
-/// Otherwise, it extracts the ICAO code from the "destination" field of the JSON object.
+/// Fetches the ICAO codes for the origin and destination airports from a JSON object.
 ///
 /// # Arguments
 ///
-/// * `json` - A reference to the serde_json::Value containing the JSON object.
-/// * `departure` - A boolean value indicating whether to extract from "origin" (true) or "destination" (false).
+/// * `json` - A reference to a JSON value representing the flight data.
 ///
 /// # Returns
 ///
-/// The extracted ICAO code as a String.
+/// A tuple containing the ICAO codes for the departure and arrival airports.
 ///
-/// # Example
+/// # Examples
 ///
 /// ```
 /// use serde_json::json;
-/// let json = json!({
+///
+/// let json_data = json!({
 ///     "origin": {
 ///         "icao_code": "EDDB"
 ///     },
 ///     "destination": {
-///         "icao_code": "EHAM"
+///         "icao_code": "EGLL"
 ///     }
 /// });
 ///
-/// let departure_icao = get_icao_from_json(&json, true);
-/// assert_eq!(departure_icao, "EDDB");
-///
-/// let destination_icao = get_icao_from_json(&json, false);
-/// assert_eq!(destination_icao, "EHAM");
+/// let (departure, arrival) = get_icao_from_json(&json_data);
+/// assert_eq!(departure, "EDDB");
+/// assert_eq!(arrival, "EGLL");
 /// ```
-fn get_icao_from_json(json: &serde_json::Value, departure: bool) -> String {
-    let place = if departure { String::from("origin") } else { String::from("destination") };
-    let s = String::from(&json[place]["icao_code"].to_string());
-    // No longer crash when invalid SimBrief username
-    if s.len() > 5 { s[1..5].to_string() } else { String::new() }
+fn get_icao_from_json(json: &serde_json::Value) -> (String, String) {
+    let mut departure = String::from(&json["origin"]["icao_code"].to_string());
+    let mut arrival = String::from(&json["destination"]["icao_code"].to_string());
+
+    departure = trim_icao_str(departure);
+    arrival = trim_icao_str(arrival);
+
+    (departure, arrival)
+}
+
+/// Removes leading and trailing characters from a string
+///
+/// Given a string, this function trims the string by removing the leading and
+/// trailing characters. If the string length is greater than 5, it removes the
+/// leading and trailing characters. Otherwise, it returns an empty string.
+///
+/// # Arguments
+///
+/// * `s` - A string to trim
+///
+/// # Returns
+///
+/// The trimmed string.
+fn trim_icao_str(s: String) -> String {
+    if s.len() > 5 {
+        s[1..s.len() - 1].to_string()
+    } else {
+        String::new()
+    }
 }
 
 /// Extracts the METAR (Meteorological Aerodrome Report) raw and flight rules from a JSON object.
