@@ -76,12 +76,12 @@ pub fn update_data(departure_icao: &str, arrival_icao: &str) -> (String, String)
     let current_time = Local::now().format("%H:%M");
     let current_time = String::from(format!("Request time: {current_time}"));
 
-    let print_dep = format!("Departure ICAO: {departure_icao}\n\n\
+    let print_dep = format!("ICAO: {departure_icao}\n\n\
             Vatsim ATIS: {dep_atis}\n\
             METAR: {departure_metar}\n\
             Flight rules: {departure_fr}");
 
-    let print_arr = format!("Arrival ICAO: {arrival_icao}\n\n\
+    let print_arr = format!("ICAO: {arrival_icao}\n\n\
             Vatsim ATIS: {arr_atis}\n\
             METAR: {arrival_metar}\n\
             Flight rules: {arrival_fr}");

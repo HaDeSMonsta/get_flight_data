@@ -192,14 +192,15 @@ impl eframe::App for DataCarrier {
                     Ok(data) => {
                         // If data is available, display it
                         if let Some((departure_val, arrival_val)) = data.as_ref() {
+                            if !self.loading.load(Ordering::Relaxed){
+                                ui.add_space(25.0);
+
+                                ui.label(format!("Data will be refreshed every five minutes, \
+                                        last request time was at: {}lcl ({}z)",
+                                        self.local_time.format("%H:%M"),
+                                        self.utc_time.format("%H:%M")));
+                            }
                             ui.add_space(25.0);
-
-                            ui.label(format!("Data will be refreshed every five minutes, \
-                    last request time was at: {}lcl ({}z)",
-                                             self.local_time.format("%H:%M"),
-                                             self.utc_time.format("%H:%M")));
-
-                            ui.add_space(25f32);
 
                             ui.heading("Departure");
                             ui.label(format!("{}", departure_val));
