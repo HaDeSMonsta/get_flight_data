@@ -290,7 +290,7 @@ impl eframe::App for DataCarrier {
                                 // Reload Flight Plan from SimBrief with new username
                                 self.username_changed = true;
                             }
-                            // Set API-Key if not empty but different
+                            // Set API-Key if not empty and different
                             if !api_key.trim().is_empty() &&
                                 api_key.trim() != json_operations::get_json_data(JsonKey::Key) {
                                 json_operations::set_json_data(JsonKey::Key, api_key.trim());

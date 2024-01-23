@@ -1,9 +1,7 @@
-use std::fmt::format;
-use std::fs::{File, OpenOptions};
+use std::fs::OpenOptions;
 use std::io::Write;
 use chrono::Local;
 use reqwest::blocking::Client;
-
 use crate::json_operations;
 
 pub const LOGFILE_NAME: &str = "gfd.log";
@@ -42,10 +40,11 @@ pub fn update_data(departure_icao: &str, arrival_icao: &str) -> (String, String)
     // Request the data via API
     log("Calling avwx API for departure");
     let departure_metar = send_request(&avwx_departure_uri);
-    log("Got departure METAR");
+    log("Got departure METAR as JSON");
+
     log("Calling avwx API for arrival");
     let arrival_metar = send_request(&avwx_arrival_uri);
-    log("Got arrival METAR");
+    log("Got arrival METAR as JSON");
 
     // Convert to JSON
     let departure_json: serde_json::Value = serde_json::from_str(departure_metar.as_str())
@@ -57,6 +56,10 @@ pub fn update_data(departure_icao: &str, arrival_icao: &str) -> (String, String)
     // Shadow _metar, because we don't need it anymore
     let (departure_metar, departure_fr) = get_metar_from_json(&departure_json);
     let (arrival_metar, arrival_fr) = get_metar_from_json(&arrival_json);
+    log(format!("Departure METAR: {departure_metar}").as_str());
+    log(format!("Departure Flight Rules: {departure_fr}").as_str());
+    log(format!("Arrival METAR: {arrival_metar}").as_str());
+    log(format!("Arrival Flight Rules: {arrival_fr}").as_str());
 
     // Begin Vatsim block
     // Format URIs
@@ -67,9 +70,12 @@ pub fn update_data(departure_icao: &str, arrival_icao: &str) -> (String, String)
     log("Calling Vatsim API for departure");
     let dep_atis_response = send_request(&vatsim_dep_uri);
     log("Got departure ATIS");
+    log(format!("Raw Departure ATIS: {dep_atis_response}").as_str());
+
     log("Calling Vatsim API for arrival ATIS");
     let arr_atis_response = send_request(&vatsim_arr_uri);
     log("Got arrival ATIS");
+    log(format!("Raw Arrival ATIS: {arr_atis_response}").as_str());
 
     // Get the formatted ATIS
     let dep_atis = get_atis(&dep_atis_response, true);
@@ -91,7 +97,7 @@ pub fn update_data(departure_icao: &str, arrival_icao: &str) -> (String, String)
 
     let line_separator = String::from("-".repeat(100));
 
-    println!("\n{current_time}\n\n{print_dep}\n\n{line_separator}\n\n{print_arr}");
+    log(format!("Final String:\n{current_time}\n\n{print_dep}\n\n{line_separator}\n\n{print_arr}").as_str());
     (print_dep, print_arr)
 }
 
@@ -201,6 +207,10 @@ fn get_icao_from_json(json: &serde_json::Value) -> (String, String) {
 
     departure = trim_icao_str(&departure);
     arrival = trim_icao_str(&arrival);
+
+    log("Extracted Departure and Arrival from JSON");
+    log(format!("Departure: {departure}").as_str());
+    log(format!("Arrival: {arrival}").as_str());
 
     (departure, arrival)
 }
