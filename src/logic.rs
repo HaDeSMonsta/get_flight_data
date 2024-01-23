@@ -1,7 +1,12 @@
+use std::fmt::format;
+use std::fs::{File, OpenOptions};
+use std::io::Write;
 use chrono::Local;
 use reqwest::blocking::Client;
 
 use crate::json_operations;
+
+pub const LOGFILE_NAME: &str = "gfd.log";
 
 /// Updates and retrieves data regarding departure and arrival airports.
 ///
@@ -358,18 +363,39 @@ fn make_atis_tuple(json_array: &serde_json::Value, index: u8) -> (String, String
     (callsign, atis)
 }
 
-/// Logs a message with timestamp in the format '[YYYY-MM-DD][HH:MM:SS]: {message}'
+/// Logs a message along with the current date and time.
+///
+/// The `log` function prints the message to the console and appends it to a log file.
+/// It uses the system's local time to generate the timestamp in the format "[YYYY-MM-DD][HH:MM:SS]".
 ///
 /// # Arguments
 ///
-/// * `message` - The message to be logged
+/// * `message` - A string slice representing the message to be logged.
 ///
-/// # Example
+/// # Panics
+///
+/// The function will panic if it is unable to open the log file for writing.
+///
+/// # Examples
 ///
 /// ```
-/// log("This is a log message");
+/// fn main() {
+///     let message = "Error: Something went wrong!";
+///     log(message);
+/// }
 /// ```
 pub fn log(message: &str) {
     let now = Local::now().format("[%Y-%m-%d][%H:%M:%S]");
-    println!("{now}: {message}")
+    let mut to_log = format!("{now}: {message}");
+    println!("{to_log}");
+
+    let mut log_file = OpenOptions::new()
+        .write(true)
+        .append(true)
+        .open(LOGFILE_NAME)
+        .expect("Unable to open Logfile");
+
+    to_log.push_str("\n");
+
+    log_file.write(to_log.as_bytes()).expect("Unable to write to Logfile");
 }

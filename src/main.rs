@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 use std::{process, thread};
+use std::fs::File;
 use std::sync::{Arc, mpsc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
@@ -45,6 +46,10 @@ struct DataCarrier {
 }
 
 pub fn main() {
+
+    // Create empty log file
+    File::create(logic::LOGFILE_NAME).expect("Unable to create Logfile");
+
     // Initially call Simbrief to get the flight plan
 
     let contend = DataCarrier {
