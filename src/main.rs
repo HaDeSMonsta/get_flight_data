@@ -1,5 +1,6 @@
 // TODO Replace current exit with way to free all resources
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
+// hide console window on Windows in release
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::{process, thread};
 use std::fs::File;
@@ -53,7 +54,8 @@ pub fn main() {
     // Initially call Simbrief to get the flight plan
 
     let contend = DataCarrier {
-        last_update: Instant::now(), // Initially data will be loaded because we simulate click of reload fp button
+        // Initially data will be loaded because we simulate click of reload fp button
+        last_update: Instant::now(),
         data: Arc::new(Mutex::new(None)),
         loading: Arc::new(AtomicBool::new(false)),
         username: Arc::new(Mutex::new(String::new())),
@@ -84,9 +86,7 @@ pub fn main() {
             Box::<DataCarrier>::new(contend)
         }),
     ).unwrap_or_else(|err| {
-        let msg = format!("Failed to run Egui frame: {err}");
-        let msg = msg.as_str();
-        log(msg);
+        log(&format!("Failed to run Egui frame: {err}"));
         process::exit(1);
     });
 
@@ -156,7 +156,9 @@ impl eframe::App for DataCarrier {
             });
 
             // Was the last update > 5 mins ago?
-            if (!self.stop_updating || self.manual_update) && self.last_update.elapsed() >= five_mins {
+            if (!self.stop_updating || self.manual_update)
+                && self.last_update.elapsed() >= five_mins {
+
                 // Set times
                 self.local_time = Local::now();
                 self.utc_time = Utc::now();
@@ -183,9 +185,8 @@ impl eframe::App for DataCarrier {
                             *data = Some(new_data);
                         }
                         Err(err) => {
-                            let msg = format!("Mutex was poisoned. \
+                            let msg = &format!("Mutex was poisoned. \
                             Failed to fetch data from the `data` Mutex guard: {err}");
-                            let msg = msg.as_str();
                             log(msg);
                             process::exit(1);
                         }
@@ -234,9 +235,8 @@ impl eframe::App for DataCarrier {
                         }
                     }
                     Err(err) => {
-                        let msg = format!("Mutex was poisoned. \
+                        let msg = &format!("Mutex was poisoned. \
                             Failed to fetch data from the `data` Mutex guard: {err}");
-                        let msg = msg.as_str();
                         log(msg);
                         process::exit(1);
                     }
@@ -251,9 +251,8 @@ impl eframe::App for DataCarrier {
                     let mut username = match self.username.lock() {
                         Ok(name) => name,
                         Err(err) => {
-                            let msg = format!("Mutex was poisoned. \
+                            let msg = &format!("Mutex was poisoned. \
                             Failed to fetch data from the `data` Mutex guard: {err}");
-                            let msg = msg.as_str();
                             log(msg);
                             process::exit(1);
                         }
@@ -261,9 +260,8 @@ impl eframe::App for DataCarrier {
                     let mut api_key = match self.api_key.lock() {
                         Ok(key) => key,
                         Err(err) => {
-                            let msg = format!("Mutex was poisoned. \
+                            let msg = &format!("Mutex was poisoned. \
                             Failed to fetch data from the `data` Mutex guard: {err}");
-                            let msg = msg.as_str();
                             log(msg);
                             process::exit(1);
                         }
@@ -310,8 +308,10 @@ impl eframe::App for DataCarrier {
                     // If a credential was saved in the last five seconds
                     if self.save_credential_time.elapsed() <= Duration::from_secs(5) {
                         // Display success message
-                        // Note: the program would panic if not successful, so we can assume it worked
-                        ui.colored_label(egui::Color32::GREEN, "Success! Data has been saved.");
+                        // Note: the program would panic if not successful,
+                        // so we can assume it worked
+                        ui.colored_label(egui::Color32::GREEN,
+                                         "Success! Data has been saved.");
                     }
                 });
         });

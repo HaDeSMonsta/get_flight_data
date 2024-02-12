@@ -52,12 +52,12 @@ pub fn get_json_data(key: JsonKey) -> String {
                 .truncate(true)
                 .open(&FILE_PATH)
                 .expect("Unable to open invalid file again");
-            let default_json = String::from(format!(
+            let default_json = format!(
                 "{{\n\
                 \t\"{NAME_FIELD}\": \"\",\n\
                 \t\"{KEY_FIELD}\": \"\"\n\
                 }}"
-            ));
+            );
             write!(file, "{default_json}").expect("Failed writing to file after seeing it's not proper json");
             return String::new();
         }
@@ -100,20 +100,20 @@ pub fn set_json_data(key: JsonKey, val: &str) {
 
     let contend = match key {
         JsonKey::Name => {
-            String::from(format!(
+            format!(
                 "{{\n\
                 \t\"{NAME_FIELD}\": \"{val}\",\n\
                 \t\"{KEY_FIELD}\": \"{other_val}\"\n\
                 }}"
-            ))
+            )
         }
         JsonKey::Key => {
-            String::from(format!(
+            format!(
                 "{{\n\
                 \t\"{NAME_FIELD}\": \"{other_val}\",\n\
                 \t\"{KEY_FIELD}\": \"{val}\"\n\
                 }}"
-            ))
+            )
         }
     };
 

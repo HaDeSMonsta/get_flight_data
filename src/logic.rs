@@ -36,8 +36,10 @@ pub fn update_data(departure_icao: &str, arrival_icao: &str) -> (String, String)
 
     // Get METAR
     // Format the departure avwx String
-    let avwx_departure_uri = format!("https://avwx.rest/api/metar/{departure_icao}?token={key}");
-    let avwx_arrival_uri = format!("https://avwx.rest/api/metar/{arrival_icao}?token={key}");
+    let avwx_departure_uri =
+        format!("https://avwx.rest/api/metar/{departure_icao}?token={key}");
+    let avwx_arrival_uri =
+        format!("https://avwx.rest/api/metar/{arrival_icao}?token={key}");
 
     // Request the data via API
     log("Calling avwx API for departure");
@@ -58,10 +60,10 @@ pub fn update_data(departure_icao: &str, arrival_icao: &str) -> (String, String)
     // Shadow _metar, because we don't need it anymore
     let (departure_metar, departure_fr) = get_metar_from_json(&departure_json);
     let (arrival_metar, arrival_fr) = get_metar_from_json(&arrival_json);
-    log(format!("Departure METAR: {departure_metar}").as_str());
-    log(format!("Departure Flight Rules: {departure_fr}").as_str());
-    log(format!("Arrival METAR: {arrival_metar}").as_str());
-    log(format!("Arrival Flight Rules: {arrival_fr}").as_str());
+    log(&format!("Departure METAR: {departure_metar}"));
+    log(&format!("Departure Flight Rules: {departure_fr}"));
+    log(&format!("Arrival METAR: {arrival_metar}"));
+    log(&format!("Arrival Flight Rules: {arrival_fr}"));
 
     // Begin Vatsim block
     // Format URIs
@@ -72,12 +74,12 @@ pub fn update_data(departure_icao: &str, arrival_icao: &str) -> (String, String)
     log("Calling Vatsim API for departure");
     let dep_atis_response = send_request(&vatsim_dep_uri);
     log("Got departure ATIS");
-    log(format!("Raw Departure ATIS: {dep_atis_response}").as_str());
+    log(&format!("Raw Departure ATIS: {dep_atis_response}"));
 
     log("Calling Vatsim API for arrival ATIS");
     let arr_atis_response = send_request(&vatsim_arr_uri);
     log("Got arrival ATIS");
-    log(format!("Raw Arrival ATIS: {arr_atis_response}").as_str());
+    log(&format!("Raw Arrival ATIS: {arr_atis_response}"));
 
     // Get the formatted ATIS
     let dep_atis = get_atis(&dep_atis_response, true);
@@ -99,7 +101,9 @@ pub fn update_data(departure_icao: &str, arrival_icao: &str) -> (String, String)
 
     let line_separator = String::from("-".repeat(100));
 
-    log(format!("Final String:\n{current_time}\n\n{print_dep}\n\n{line_separator}\n\n{print_arr}").as_str());
+    log(&format!("Final String:\n{current_time}\n\n\
+    {print_dep}\n\n{line_separator}\n\n{print_arr}"));
+
     (print_dep, print_arr)
 }
 
@@ -127,7 +131,8 @@ pub fn update_fp() -> (String, String) {
     let name = json_operations::get_json_data(json_operations::JsonKey::Name);
 
     // Format the Simbrief request String
-    let simbrief_uri = format!("https://www.simbrief.com/api/xml.fetcher.php?username={name}&json=1");
+    let simbrief_uri =
+        format!("https://www.simbrief.com/api/xml.fetcher.php?username={name}&json=1");
 
     // Get Simbrief data via API
     log("Calling Simbrief API");
@@ -151,7 +156,8 @@ pub fn update_fp() -> (String, String) {
 ///
 /// # Panics
 ///
-/// This function will panic if the HTTP request fails or if the response cannot be converted to a string.
+/// This function will panic if the HTTP request fails
+/// or if the response cannot be converted to a string.
 ///
 /// # Examples
 ///
@@ -211,8 +217,8 @@ fn get_icao_from_json(json: &serde_json::Value) -> (String, String) {
     arrival = trim_icao_str(&arrival);
 
     log("Extracted Departure and Arrival from JSON");
-    log(format!("Departure: {departure}").as_str());
-    log(format!("Arrival: {arrival}").as_str());
+    log(&format!("Departure: {departure}"));
+    log(&format!("Arrival: {arrival}"));
 
     (departure, arrival)
 }
@@ -256,13 +262,15 @@ fn trim_icao_str(s: &String) -> String {
 /// use serde_json::Value;
 ///
 /// let json = json!({
-///     "raw": "EDDB 251820Z AUTO 24010KT 9999 VCSH SCT027 BKN039 OVC045 FEW///TCU 09/06 Q1005 NOSIG",
+///     "raw": "EDDB 251820Z AUTO 24010KT 9999 VCSH SCT027 BKN039 OVC045 FEW///
+/// TCU 09/06 Q1005 NOSIG",
 ///     "flight_rules": "VFR"
 /// });
 ///
 /// let (raw, fr) = get_metar_from_json(&json);
 ///
-/// assert_eq!(raw, "EDDB 251820Z AUTO 24010KT 9999 VCSH SCT027 BKN039 OVC045 FEW///TCU 09/06 Q1005 NOSIG");
+/// assert_eq!(raw, "EDDB 251820Z AUTO 24010KT 9999 VCSH SCT027 BKN039 OVC045 FEW///
+/// TCU 09/06 Q1005 NOSIG");
 /// assert_eq!(fr, "VFR");
 /// ```
 fn get_metar_from_json(json: &serde_json::Value) -> (String, String) {
@@ -271,6 +279,7 @@ fn get_metar_from_json(json: &serde_json::Value) -> (String, String) {
 
     raw = raw[1..raw.len() - 1].to_string();
     fr = fr[1..fr.len() - 1].to_string();
+
     (raw, fr)
 }
 
@@ -299,7 +308,9 @@ fn get_metar_from_json(json: &serde_json::Value) -> (String, String) {
 fn get_atis(response_raw: &str, departure: bool) -> String {
     if response_raw == "[]" { return "No vatsim ATIS available".to_string(); }
 
-    let dep_or_arr = if departure { String::from("departure") } else { String::from("arrival") };
+    let dep_or_arr =
+        if departure { String::from("departure") } else { String::from("arrival") };
+
     let response_arr: serde_json::Value = serde_json::from_str(&response_raw)
         .expect(format!("Response for {dep_or_arr} should be valid JSON Array").as_str());
 
@@ -336,7 +347,7 @@ fn get_atis(response_raw: &str, departure: bool) -> String {
 
     let mut strs: Vec<String> = vec![];
     for slice in atis_arr {
-        log(format!("Slice: {slice}").as_str());
+        log(&format!("Slice: {slice}"));
 
         let str_to_add = if slice.len() > 1 {
             slice[1..slice.len()].to_string()
@@ -390,7 +401,8 @@ fn make_atis_tuple(json_array: &serde_json::Value, index: u8) -> (String, String
 /// Logs a message along with the current date and time.
 ///
 /// The `log` function prints the message to the console and appends it to a log file.
-/// It uses the system's local time to generate the timestamp in the format "[YYYY-MM-DD][HH:MM:SS]".
+/// It uses the system's local time to generate the timestamp in the format
+/// "[YYYY-MM-DD][HH:MM:SS]".
 ///
 /// # Arguments
 ///
@@ -409,7 +421,7 @@ fn make_atis_tuple(json_array: &serde_json::Value, index: u8) -> (String, String
 /// }
 /// ```
 pub fn log(message: &str) {
-    let now = Local::now().format("[%Y-%m-%d][%H:%M:%S]");
+    let now = Local::now().format("[%Y-%m-%d]-[%H:%M:%S]");
     let mut to_log = format!("{now}: {message}");
     println!("{to_log}");
 
