@@ -1,7 +1,9 @@
 use std::fs::OpenOptions;
 use std::io::Write;
+
 use chrono::Local;
 use reqwest::blocking::Client;
+
 use crate::json_operations;
 
 pub const LOGFILE_NAME: &str = "gfd.log";
@@ -327,13 +329,25 @@ fn get_atis(response_raw: &str, departure: bool) -> String {
     to_return = to_return[1..to_return.len() - 1].to_string();
 
     let atis_arr = to_return.split(",");
-    let mut to_return = String::new();
 
+    const NEWLINE: &'static str = "\n";
+    let flight_status_str = if departure { "departure" } else { "arrival" };
+    log(&format!("Beginning splitting of {flight_status_str} ATIS"));
+
+    let mut strs: Vec<String> = vec![];
     for slice in atis_arr {
-        to_return = to_return + &*String::from(slice[1..slice.len() - 1].to_string()) + &*String::from("\n")
-    }
+        log(format!("Slice: {slice}").as_str());
 
-    to_return
+        let str_to_add = if slice.len() > 1 {
+            slice[1..slice.len()].to_string()
+        } else {
+            slice.to_string()
+        };
+        strs.push(str_to_add);
+    }
+    log(&format!("Finished splitting of {flight_status_str} ATIS"));
+
+    strs.join(NEWLINE)
 }
 
 /// Extracts the callsign and ATIS information from a JSON array.
