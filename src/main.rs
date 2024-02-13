@@ -2,8 +2,9 @@
 // hide console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::{process, thread};
-use std::fs::File;
+use std::{panic, process, thread};
+use std::fs::{File, OpenOptions};
+use std::io::Write;
 use std::sync::{Arc, mpsc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
@@ -16,6 +17,8 @@ use logic::log;
 
 mod logic;
 mod json_operations;
+
+const ERROR_FILE_NAME: &str = "gfd_err.log";
 
 struct DataCarrier {
     // Time since last request
@@ -47,6 +50,31 @@ struct DataCarrier {
 }
 
 pub fn main() {
+
+    // Set panic behavior
+    // Note: Expect does nothing in this block, so we can use unwrap
+    panic::set_hook(Box::new(|panic_payload| {
+        let mut file = OpenOptions::new()
+            .write(true)
+            .append(true)
+            .create(true)
+            .open(ERROR_FILE_NAME)
+            .unwrap();
+
+        if let Some(err_msg) = panic_payload.payload().downcast_ref::<&str>() {
+            writeln!(file, "A panic occurred: {err_msg}").unwrap();
+        } else if let Some(err_msg) = panic_payload.payload().downcast_ref::<String>() {
+            writeln!(file, "A panic occurred: {err_msg}").unwrap();
+        } else {
+            writeln!(file, "A panic occurred").unwrap();
+        }
+
+        if let Some(err_location) = panic_payload.location() {
+            writeln!(file, "Panic happened at {err_location}").unwrap();
+        } else {
+            writeln!(file, "Panic location cannot be determined").unwrap();
+        }
+    }));
 
     // Create empty log file
     File::create(logic::LOGFILE_NAME).expect("Unable to create Logfile");
