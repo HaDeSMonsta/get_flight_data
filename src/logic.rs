@@ -428,5 +428,5 @@ pub fn log(message: &str) {
         .open(LOGFILE_NAME)
         .expect("Unable to open Logfile");
 
-    write!(log_file, "{to_log}").expect("Unable to write to log file");
+    writeln!(log_file, "{to_log}").expect("Unable to write to log file");
 }
