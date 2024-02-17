@@ -418,16 +418,15 @@ fn make_atis_tuple(json_array: &serde_json::Value, index: u8) -> (String, String
 /// ```
 pub fn log(message: &str) {
     let now = Local::now().format("[%Y-%m-%d]-[%H:%M:%S]");
-    let mut to_log = format!("{now}: {message}");
+    let to_log = format!("{now}: {message}");
     println!("{to_log}");
 
     let mut log_file = OpenOptions::new()
         .write(true)
         .append(true)
+        .create(true)
         .open(LOGFILE_NAME)
         .expect("Unable to open Logfile");
 
-    to_log.push_str("\n");
-
-    log_file.write(to_log.as_bytes()).expect("Unable to write to Logfile");
+    write!(log_file, "{to_log}").expect("Unable to write to log file");
 }

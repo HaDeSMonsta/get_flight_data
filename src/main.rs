@@ -2,8 +2,8 @@
 // hide console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::{panic, process, thread};
-use std::fs::{File, OpenOptions};
+use std::{fs, panic, process, thread};
+use std::fs::OpenOptions;
 use std::io::Write;
 use std::sync::{Arc, mpsc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -77,7 +77,7 @@ pub fn main() {
     }));
 
     // Create empty log file
-    File::create(logic::LOGFILE_NAME).expect("Unable to create Logfile");
+    fs::remove_file(logic::LOGFILE_NAME).expect("");
 
     // Initially call Simbrief to get the flight plan
 
