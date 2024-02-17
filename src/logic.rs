@@ -349,12 +349,8 @@ fn get_atis(response_raw: &str, departure: bool) -> String {
     for slice in atis_arr {
         log(&format!("Slice: {slice}"));
 
-        let str_to_add = if slice.len() > 1 {
-            slice[1..slice.len()].to_string()
-        } else {
-            slice.to_string()
-        };
-        strs.push(str_to_add);
+        let removed_quotes = slice.replace("\"", "");
+        strs.push(removed_quotes);
     }
     log(&format!("Finished splitting of {flight_status_str} ATIS"));
 
