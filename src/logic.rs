@@ -210,38 +210,23 @@ fn send_request(uri: &str) -> String {
 /// assert_eq!(arrival, "EGLL");
 /// ```
 fn get_icao_from_json(json: &serde_json::Value) -> (String, String) {
-    let mut departure = String::from(&json["origin"]["icao_code"].to_string());
-    let mut arrival = String::from(&json["destination"]["icao_code"].to_string());
+    let departure_raw = String::from(&json["origin"]["icao_code"].to_string());
+    let arrival_raw = String::from(&json["destination"]["icao_code"].to_string());
 
-    departure = trim_icao_str(&departure);
-    arrival = trim_icao_str(&arrival);
+    let departure = departure_raw
+        .replace("\"", "")
+        .trim()
+        .to_string();
+    let arrival = arrival_raw
+        .replace("\"", "")
+        .trim()
+        .to_string();
 
     log("Extracted Departure and Arrival from JSON");
     log(&format!("Departure: {departure}"));
     log(&format!("Arrival: {arrival}"));
 
     (departure, arrival)
-}
-
-/// Removes leading and trailing characters from a string
-///
-/// Given a string, this function trims the string by removing the leading and
-/// trailing characters. If the string length is greater than 5, it removes the
-/// leading and trailing characters. Otherwise, it returns an empty string.
-///
-/// # Arguments
-///
-/// * `s` - A string to trim
-///
-/// # Returns
-///
-/// The trimmed string.
-fn trim_icao_str(s: &String) -> String {
-    if s.len() > 5 {
-        s[1..s.len() - 1].to_string()
-    } else {
-        String::new()
-    }
 }
 
 /// Extracts the METAR (Meteorological Aerodrome Report) raw and flight rules from a JSON object.
