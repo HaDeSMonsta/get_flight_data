@@ -76,8 +76,8 @@ pub fn main() {
         }
     }));
 
-    // Create empty log file
-    fs::remove_file(logic::LOGFILE_NAME).expect("");
+    // Remove old log file
+    let _ = fs::remove_file(logic::LOGFILE_NAME);
 
     // Initially call Simbrief to get the flight plan
 
