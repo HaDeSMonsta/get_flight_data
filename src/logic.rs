@@ -370,7 +370,7 @@ fn get_atis(response_raw: &str, departure: bool) -> String {
 /// ]);
 ///
 /// let (callsign, atis) = make_atis_tuple(&json_array, 1);
-/// assert_eq!(callsign, "DEF456");
+/// assert_eq!(callsign, "EDDF_A_ATIS");
 /// assert_eq!(atis, "Information BRAVO");
 /// ```
 fn make_atis_tuple(json_array: &serde_json::Value, index: u8) -> (String, String) {
