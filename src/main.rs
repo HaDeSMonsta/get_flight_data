@@ -5,12 +5,13 @@
 use std::{fs, panic, process};
 use std::fs::OpenOptions;
 use std::io::Write;
-use std::sync::{Arc, mpsc, Mutex};
+use std::sync::{Arc, mpsc};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
 use chrono::{DateTime, Local, Utc};
 use eframe::egui;
+use tokio::sync::Mutex;
 
 use json_operations::JsonKey;
 use logic::log;
@@ -209,17 +210,8 @@ impl eframe::App for DataCarrier {
                     let new_data = logic::update_data(&departure, &arrival).await;
 
                     // Update shared data
-                    match data_to_update.lock() {
-                        Ok(mut data) => {
-                            *data = Some(new_data);
-                        }
-                        Err(err) => {
-                            let msg = &format!("Mutex was poisoned. \
-                            Failed to fetch data from the `data` Mutex guard: {err}");
-                            log(msg);
-                            process::exit(1);
-                        }
-                    }
+                    let mut data = data_to_update.lock().await;
+                    *data = Some(new_data);
 
                     // Now, when loading is done, set flag to false
                     loading_status.store(false, Ordering::Relaxed);
@@ -240,8 +232,8 @@ impl eframe::App for DataCarrier {
 
             // Access shared data
             {
-                match self.data.lock() {
-                    Ok(data) => {
+                let data = self.data.lock().await;
+
                         // If data is available, display it
                         if let Some((departure_val, arrival_val)) = data.as_ref() {
                             if !self.loading.load(Ordering::Relaxed) {
@@ -262,14 +254,6 @@ impl eframe::App for DataCarrier {
                             ui.heading("Arrival");
                             ui.label(format!("{}", arrival_val));
                         }
-                    }
-                    Err(err) => {
-                        let msg = &format!("Mutex was poisoned. \
-                            Failed to fetch data from the `data` Mutex guard: {err}");
-                        log(msg);
-                        process::exit(1);
-                    }
-                }
             }
 
             ui.add_space(25.0);
