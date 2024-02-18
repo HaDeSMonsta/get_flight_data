@@ -2,7 +2,7 @@
 // hide console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::{fs, panic, process, thread};
+use std::{fs, panic, process};
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::sync::{Arc, mpsc, Mutex};
@@ -49,7 +49,8 @@ struct DataCarrier {
     manual_update: bool,
 }
 
-pub fn main() {
+#[tokio::main]
+async fn main() {
 
     // Set panic behavior
     // Note: Expect does nothing in this block, so we can use unwrap
@@ -168,8 +169,8 @@ impl eframe::App for DataCarrier {
                         self.flight_plan_update = Some(rx);
 
                         // Spawn a new thread to perform the update
-                        thread::spawn(move || {
-                            let (departure, arrival) = logic::update_fp();
+                        tokio::spawn(async move {
+                            let (departure, arrival) = logic::update_fp().await;
 
                             // Send the update back to the main thread
                             tx.send((departure, arrival)).unwrap();
@@ -204,8 +205,8 @@ impl eframe::App for DataCarrier {
                 let departure = self.departure.clone();
                 let arrival = self.arrival.clone();
 
-                thread::spawn(move || {
-                    let new_data = logic::update_data(&departure, &arrival);
+                tokio::spawn(async move {
+                    let new_data = logic::update_data(&departure, &arrival).await;
 
                     // Update shared data
                     match data_to_update.lock() {

@@ -28,7 +28,7 @@ pub const LOGFILE_NAME: &str = "gfd.log";
 /// assert!(print_dep.contains("Departure ICAO: EDDB"));
 /// assert!(print_arr.contains("Arrival ICAO: EHAM"));
 /// ```
-pub fn update_data(departure_icao: &str, arrival_icao: &str) -> (String, String) {
+pub async fn update_data(departure_icao: &str, arrival_icao: &str) -> (String, String) {
 
     // Removed redundant SimBrief call
     // Read user key
@@ -51,9 +51,9 @@ pub fn update_data(departure_icao: &str, arrival_icao: &str) -> (String, String)
     log("Got arrival METAR as JSON");
 
     // Convert to JSON
-    let departure_json: serde_json::Value = serde_json::from_str(departure_metar.as_str())
+    let departure_json: serde_json::Value = serde_json::from_str(departure_metar.await.as_str())
         .expect("Departure response should be valid JSON");
-    let arrival_json: serde_json::Value = serde_json::from_str(arrival_metar.as_str())
+    let arrival_json: serde_json::Value = serde_json::from_str(arrival_metar.await.as_str())
         .expect("Arrival response should be valid JSON");
 
     // Get the raw data and flight rules
@@ -72,12 +72,12 @@ pub fn update_data(departure_icao: &str, arrival_icao: &str) -> (String, String)
 
     // Call the Vatsim API
     log("Calling Vatsim API for departure");
-    let dep_atis_response = send_request(&vatsim_dep_uri);
+    let dep_atis_response = send_request(&vatsim_dep_uri).await;
     log("Got departure ATIS");
     log(&format!("Raw Departure ATIS: {dep_atis_response}"));
 
     log("Calling Vatsim API for arrival ATIS");
-    let arr_atis_response = send_request(&vatsim_arr_uri);
+    let arr_atis_response = send_request(&vatsim_arr_uri).await;
     log("Got arrival ATIS");
     log(&format!("Raw Arrival ATIS: {arr_atis_response}"));
 
@@ -125,7 +125,7 @@ pub fn update_data(departure_icao: &str, arrival_icao: &str) -> (String, String)
 ///     println!("Arrival ICAO: {}", arrival_icao);
 /// }
 /// ```
-pub fn update_fp() -> (String, String) {
+pub async fn update_fp() -> (String, String) {
 
     // Get SimBrief username
     let name = json_operations::get_json_data(json_operations::JsonKey::Name);
@@ -140,7 +140,7 @@ pub fn update_fp() -> (String, String) {
     log("Got response from Simbrief");
 
     // Convert response to JSON datatype
-    let simbrief_json: serde_json::Value = serde_json::from_str(simbrief_data.as_str())
+    let simbrief_json: serde_json::Value = serde_json::from_str(simbrief_data.await.as_str())
         .expect("Simbrief response should be valid JSON");
 
     let (departure_icao, arrival_icao) = get_icao_from_json(&simbrief_json);
@@ -166,7 +166,7 @@ pub fn update_fp() -> (String, String) {
 /// let response = send_request(&uri);
 /// println!("Response: {}", response);
 /// ```
-fn send_request(uri: &str) -> String {
+async fn send_request(uri: &str) -> String {
     // TODO implement error handling
     let http_client = Client::new();
     let response = match http_client.get(uri).send() {
