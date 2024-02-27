@@ -2,9 +2,8 @@
 // hide console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use logger_utc as logger;
 use std::{fs, panic, process, thread};
-use std::fs::OpenOptions;
-use std::io::Write;
 use std::sync::{Arc, mpsc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
@@ -18,7 +17,7 @@ use logic::log;
 mod logic;
 mod json_operations;
 
-const ERROR_FILE_NAME: &str = "gfd_err.log";
+const ERROR_FILE_NAME: &'static str = "gfd_err.log";
 
 struct DataCarrier {
     // Time since last request
@@ -49,30 +48,29 @@ struct DataCarrier {
     manual_update: bool,
 }
 
-pub fn main() {
+fn main() {
 
     // Set panic behavior
     // Note: Expect does nothing in this block, so we can use unwrap
     panic::set_hook(Box::new(|panic_payload| {
-        let mut file = OpenOptions::new()
-            .write(true)
-            .append(true)
-            .create(true)
-            .open(ERROR_FILE_NAME)
-            .unwrap();
+        fn err_log(to_log: &str) {
+            let log_dir = logic::LOG_DIR;
+            let file_name = &format!("{log_dir}/{ERROR_FILE_NAME}");
+            logger::log_to_file(to_log, file_name).unwrap();
+        }
 
         if let Some(err_msg) = panic_payload.payload().downcast_ref::<&str>() {
-            writeln!(file, "A panic occurred: {err_msg}").unwrap();
+            err_log(&format!("A panic occurred: {err_msg}"));
         } else if let Some(err_msg) = panic_payload.payload().downcast_ref::<String>() {
-            writeln!(file, "A panic occurred: {err_msg}").unwrap();
+            err_log(&format!("A panic occurred: {err_msg}"));
         } else {
-            writeln!(file, "A panic occurred").unwrap();
+            err_log("A panic occurred");
         }
 
         if let Some(err_location) = panic_payload.location() {
-            writeln!(file, "Panic happened at {err_location}").unwrap();
+            err_log(&format!("Panic happened at {err_location}"));
         } else {
-            writeln!(file, "Panic location cannot be determined").unwrap();
+            err_log("The panic location cannot be determined");
         }
     }));
 

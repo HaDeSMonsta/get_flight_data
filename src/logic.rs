@@ -1,10 +1,12 @@
 use logger_utc as logger;
 use chrono::Local;
+use logger::log_to_dyn_file;
 use reqwest::blocking::Client;
 
 use crate::json_operations;
 
-pub const LOGFILE_NAME: &str = "gfd.log";
+pub const LOGFILE_NAME: &'static str = "gfd.log";
+pub const LOG_DIR: &'static str = "logs";
 
 /// Updates and retrieves data regarding departure and arrival airports.
 ///
@@ -401,5 +403,5 @@ fn make_atis_tuple(json_array: &serde_json::Value, index: u8) -> (String, String
 /// ```
 pub fn log(message: &str) {
     logger::log(message);
-    logger::log_to_dyn_file(message, None, LOGFILE_NAME).unwrap()
+    log_to_dyn_file(message, Some(LOG_DIR), LOGFILE_NAME).unwrap();
 }
