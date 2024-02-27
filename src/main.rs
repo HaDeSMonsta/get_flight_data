@@ -2,7 +2,6 @@
 // hide console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use logger_utc as logger;
 use std::{fs, panic, process, thread};
 use std::sync::{Arc, mpsc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -10,9 +9,11 @@ use std::time::{Duration, Instant};
 
 use chrono::{DateTime, Local, Utc};
 use eframe::egui;
+use logger_utc as logger;
 
 use json_operations::JsonKey;
 use logic::log;
+use crate::logic::{get_log_dir, LOGFILE_NAME};
 
 mod logic;
 mod json_operations;
@@ -54,8 +55,8 @@ fn main() {
     // Note: Expect does nothing in this block, so we can use unwrap
     panic::set_hook(Box::new(|panic_payload| {
         fn err_log(to_log: &str) {
-            let log_dir = logic::LOG_DIR;
-            let file_name = &format!("{log_dir}/{ERROR_FILE_NAME}");
+            let log_dir = get_log_dir();
+            let file_name = &format!("{log_dir}{ERROR_FILE_NAME}");
             logger::log_to_file(to_log, file_name).unwrap();
         }
 
@@ -73,10 +74,18 @@ fn main() {
             err_log("The panic location cannot be determined");
         }
     }));
+    
+    // Ensure log dir exists
+    fs::create_dir_all(get_log_dir()).unwrap();
 
     // Remove old log file
-    let _ = fs::remove_file(logic::LOGFILE_NAME);
-
+    {
+        let log_file = LOGFILE_NAME;
+        let lop_dir = get_log_dir();
+        let old_file_name = format!("{lop_dir}{log_file}");
+        let _ = fs::remove_file(old_file_name);
+    }
+    
     // Initially call Simbrief to get the flight plan
 
     let contend = DataCarrier {

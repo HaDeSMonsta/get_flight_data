@@ -1,9 +1,10 @@
+use std::env::current_exe;
 use logger_utc as logger;
 use chrono::Local;
 use logger::log_to_dyn_file;
 use reqwest::blocking::Client;
 
-use crate::json_operations;
+use crate::{json_operations, logic};
 
 pub const LOGFILE_NAME: &'static str = "gfd.log";
 pub const LOG_DIR: &'static str = "logs";
@@ -403,5 +404,32 @@ fn make_atis_tuple(json_array: &serde_json::Value, index: u8) -> (String, String
 /// ```
 pub fn log(message: &str) {
     logger::log(message);
-    log_to_dyn_file(message, Some(LOG_DIR), LOGFILE_NAME).unwrap();
+    log_to_dyn_file(message, Some(&get_log_dir()), LOGFILE_NAME).unwrap();
+}
+
+/// Returns the path to the log directory.
+///
+/// # Panics
+///
+/// - If Getting the path to the executable fails
+/// - If the executable does not have a parent directory.
+#[cfg(target_os = "windows")]
+pub fn get_log_dir() -> String {
+    let mut path = current_exe()
+        .expect("Failed to get current executable")
+        .parent()
+        .unwrap()
+        .to_path_buf();
+    path.push(LOG_DIR);
+    let path_string = path.to_str().unwrap();
+    format!("{path_string}\\")
+}
+
+/// Returns the log directory.
+///
+/// This function returns the log directory in the form of a string.
+/// The log directory is determined based on the target operating system being UNIX.
+#[cfg(target_os = "unix")]
+pub fn get_log_dir() -> String {
+    format!("{LOG_DIR}/")
 }
