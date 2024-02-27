@@ -1339,6 +1339,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "eframe",
+ "logger_utc",
  "reqwest",
  "serde",
  "serde_json",
@@ -1896,6 +1897,15 @@ name = "log"
 version = "0.4.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
+
+[[package]]
+name = "logger_utc"
+version = "0.1.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ad90319233d9b702cb770b0c8f1a3bc2fada61d15ff11bece90f448712aa32c"
+dependencies = [
+ "chrono",
+]
 
 [[package]]
 name = "malloc_buf"

@@ -1,6 +1,4 @@
-use std::fs::OpenOptions;
-use std::io::Write;
-
+use logger_utc as logger;
 use chrono::Local;
 use reqwest::blocking::Client;
 
@@ -402,16 +400,6 @@ fn make_atis_tuple(json_array: &serde_json::Value, index: u8) -> (String, String
 /// }
 /// ```
 pub fn log(message: &str) {
-    let now = Local::now().format("[%Y-%m-%d]-[%H:%M:%S]");
-    let to_log = format!("{now}: {message}");
-    println!("{to_log}");
-
-    let mut log_file = OpenOptions::new()
-        .write(true)
-        .append(true)
-        .create(true)
-        .open(LOGFILE_NAME)
-        .expect("Unable to open Logfile");
-
-    writeln!(log_file, "{to_log}").expect("Unable to write to log file");
+    logger::log(message);
+    logger::log_to_dyn_file(message, None, LOGFILE_NAME).unwrap()
 }
