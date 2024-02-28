@@ -12,10 +12,12 @@ use eframe::egui;
 use logger_utc as logger;
 
 use json_operations::JsonKey;
-use crate::logic::{get_log_dir, log, LOGFILE_NAME};
+use crate::dir_manager::get_log_dir;
+use crate::logic::{log, LOGFILE_NAME};
 
 mod logic;
 mod json_operations;
+mod dir_manager;
 
 const ERROR_FILE_NAME: &'static str = "gfd_err.log";
 
