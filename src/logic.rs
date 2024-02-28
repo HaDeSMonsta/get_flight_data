@@ -1,10 +1,10 @@
 use std::env::current_exe;
 use logger_utc as logger;
 use chrono::Local;
-use logger::log_to_dyn_file;
+use logger_utc::log_to_file;
 use reqwest::blocking::Client;
 
-use crate::{json_operations, logic};
+use crate::json_operations;
 
 pub const LOGFILE_NAME: &'static str = "gfd.log";
 pub const LOG_DIR: &'static str = "logs";
@@ -404,7 +404,8 @@ fn make_atis_tuple(json_array: &serde_json::Value, index: u8) -> (String, String
 /// ```
 pub fn log(message: &str) {
     logger::log(message);
-    log_to_dyn_file(message, Some(&get_log_dir()), LOGFILE_NAME).unwrap();
+    let path = &format!("{}{}", get_log_dir(), LOGFILE_NAME);
+    log_to_file(message, path).unwrap();
 }
 
 /// Returns the path to the log directory.

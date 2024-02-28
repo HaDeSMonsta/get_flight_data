@@ -12,8 +12,7 @@ use eframe::egui;
 use logger_utc as logger;
 
 use json_operations::JsonKey;
-use logic::log;
-use crate::logic::{get_log_dir, LOGFILE_NAME};
+use crate::logic::{get_log_dir, log, LOGFILE_NAME};
 
 mod logic;
 mod json_operations;
